@@ -12,7 +12,7 @@ export type ButtonVariant =
     | 'ghost'        
     | 'ghost-outline'; 
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children?: ReactNode;
@@ -46,24 +46,22 @@ export const Button = ({
 
     const isIconOnly = !children && (leftIcon || rightIcon);
 
-    
-    const variantClasses = {
-        primary: 'bg-bg-brand-primary hover:bg-bg-brand-primary/90 active:bg-bg-brand-primary/80 text-content-primary-inverted shadow-sm hover:shadow',
-        danger: 'bg-bg-critical hover:bg-bg-critical/90 active:bg-bg-critical/80 text-content-primary-inverted shadow-sm hover:shadow',
-        warning: 'bg-bg-warning hover:bg-bg-warning/90 active:bg-bg-warning/80 text-content-primary-inverted shadow-sm hover:shadow',
-        ghost: 'bg-transparent hover:bg-bg-secondary/50 active:bg-bg-secondary/70',
-        'ghost-outline': 'bg-transparent border border-border-secondary-soft hover:bg-bg-secondary/30 active:bg-bg-secondary/50 text-content-secondary',
-    };
+const variantClasses = {
+    primary: 'bg-[#007353] hover:bg-[#007353]/90 active:bg-[#007353]/80 text-white shadow-sm hover:shadow',
+    danger: 'bg-[#DC2626] hover:bg-[#DC2626]/90 active:bg-[#DC2626]/80 text-white shadow-sm hover:shadow',
+    warning: 'bg-[#D97706] hover:bg-[#D97706]/90 active:bg-[#D97706]/80 text-white shadow-sm hover:shadow',
+    ghost: 'bg-transparent hover:bg-gray-100/50 active:bg-gray-100/70 text-[#000F0B]',
+    'ghost-outline': 'bg-transparent border border-[#E0E0E0] hover:bg-gray-100/30 active:bg-gray-100/50 text-[#000F0B]',
+};
 
-    
     const sizeClasses = {
+        xs: isIconOnly ? 'p-2' : 'px-2 py-1 text-[10px] gap-1',
         sm: isIconOnly ? 'p-2' : 'px-3 py-1.5 text-xs gap-1.5',
         md: isIconOnly ? 'p-2.5' : 'px-4 py-2.5 text-sm gap-2',
         lg: isIconOnly ? 'p-3' : 'px-6 py-3 text-base gap-2.5',
         xl: isIconOnly ? 'p-4' : 'px-8 py-4 text-lg gap-3',
     };
 
-    
     const getMinWidthClass = () => {
         if (typeof minWidth === 'number') {
             return `min-w-[${minWidth}px]`;
@@ -74,12 +72,12 @@ export const Button = ({
     const widthClass = fullWidth ? 'w-full' : getMinWidthClass();
     const isDisabled = disabled || isLoading;
 
-    // حجم الأيقونة
+    // حجم الأيقونة - إضافة حجم xs
     const getIconSize = () => {
         if (isIconOnly) {
-            return size === 'sm' ? 18 : size === 'md' ? 22 : size === 'lg' ? 26 : 30;
+            return size === 'xs' ? 14 : size === 'sm' ? 18 : size === 'md' ? 22 : size === 'lg' ? 26 : 30;
         }
-        return size === 'sm' ? 14 : size === 'md' ? 16 : size === 'lg' ? 20 : 24;
+        return size === 'xs' ? 10 : size === 'sm' ? 14 : size === 'md' ? 16 : size === 'lg' ? 20 : 24;
     };
 
     // Focus ring colours
@@ -110,7 +108,6 @@ export const Button = ({
                 ${className}
             `}
             style={{
-                ...(typeof minWidth === 'number' ? { minWidth: `${minWidth}px` } : {}),
                 ...(iconColor ? { color: iconColor } : {}),
             }}
             {...props}
