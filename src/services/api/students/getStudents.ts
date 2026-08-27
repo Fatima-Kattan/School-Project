@@ -37,7 +37,7 @@ export const getStudents = async (
     filters?: { class_id?: number; section_id?: number }
 ): Promise<StudentsListResponse> => {
     try {
-        let url = 'http://localhost:8000/api/v1/dashboard/students';
+        let url = 'http://localhost:8000/api/dashboard/students';
 
         if (filters) {
             const params = new URLSearchParams();

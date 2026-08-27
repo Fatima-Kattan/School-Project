@@ -74,7 +74,7 @@ export const Button = ({
     const widthClass = fullWidth ? 'w-full' : getMinWidthClass();
     const isDisabled = disabled || isLoading;
 
-    // حجم الأيقونة
+    
     const getIconSize = () => {
         if (isIconOnly) {
             return size === 'sm' ? 18 : size === 'md' ? 22 : size === 'lg' ? 26 : 30;
@@ -82,7 +82,7 @@ export const Button = ({
         return size === 'sm' ? 14 : size === 'md' ? 16 : size === 'lg' ? 20 : 24;
     };
 
-    // Focus ring colours
+    
     const focusRingClasses = {
         primary: 'focus:ring-content-brand-primary',
         danger: 'focus:ring-content-critical',
