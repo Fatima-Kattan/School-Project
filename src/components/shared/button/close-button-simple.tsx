@@ -15,12 +15,12 @@ export const CloseButtonSimple = ({
     onClick,
     className = '',
     disabled = false,
-    size = 'md',
+    size = 'lg',
 }: CloseButtonSimpleProps) => {
     const sizeClasses = {
-        sm: 'w-6 h-6 text-sm',
-        md: 'w-8 h-8 text-base',
-        lg: 'w-10 h-10 text-lg',
+        sm: 'w-8 h-8 text-sm',
+        md: 'w-10 h-10 text-base',
+        lg: 'w-12 h-12 text-lg',
     };
 
     return (
@@ -32,18 +32,18 @@ export const CloseButtonSimple = ({
                 inline-flex items-center justify-center
                 rounded-full
                 bg-transparent
-                hover:bg-gray-100
-                active:bg-gray-200
-                text-gray-500
-                hover:text-gray-700
+                hover:bg-red-50
+                active:bg-red-100
+                text-black
+                hover:text-red-600
                 transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${sizeClasses[size]}
                 ${className}
             `}
         >
-            <X size={size === 'sm' ? 14 : size === 'md' ? 18 : 24} />
+            <X size={size === 'sm' ? 18 : size === 'md' ? 22 : 28} />
         </button>
     );
 };
