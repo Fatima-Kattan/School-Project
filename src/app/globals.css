@@ -6,7 +6,7 @@
   /* ===== Content Colors ===== */
   --content-primary: #000f0b;
   --content-brand-primary: #007353;
-  --content-primary-inverted: #FFFFFF;
+  --content-primary-inverted: #ffffff;
   --content-secondary: #47524f;
   --content-success: #00a63e;
   --content-warning: #d97706;
@@ -15,17 +15,17 @@
   --content-disabled: #acacac;
 
   /* ===== Background Colors ===== */
-  --bg-critical: #DC2626;
-  --bg-primary: #FFFFFF;
-  --bg-brand-soft: #F0F7F5;
+  --bg-critical: #dc2626;
+  --bg-primary: #ffffff;
+  --bg-brand-soft: #f0f7f5;
   --bg-brand-primary: #007353;
-  --bg-secondary: #F7F7F7;
-  --bg-success-soft: #E0F4E7;
-  --bg-critical-soft: #FAE5E5;
-  --bg-brand-very-soft: #F9FCFB;
-  --bg-warning: #D97706;
-  --bg-success: #00A63E;
-  --bg-warning-soft: #FCF2E7;
+  --bg-secondary: #f7f7f7;
+  --bg-success-soft: #e0f4e7;
+  --bg-critical-soft: #fae5e5;
+  --bg-brand-very-soft: #f9fcfb;
+  --bg-warning: #d97706;
+  --bg-success: #00a63e;
+  --bg-warning-soft: #fcf2e7;
 
   /* ===== Border Colors ===== */
   --border--secondary: #d0d0d0;
@@ -43,9 +43,9 @@
   --data-purple: #7c3aed;
   --data-purple-soft: #ede9fe;
   --data-orange: #fa8022;
-  --data-orange-soft: #FFEDD5;
-  --data-cyan: #06B6D4;
-  --data-cyan-soft: #CFFAFE;
+  --data-orange-soft: #ffedd5;
+  --data-cyan: #06b6d4;
+  --data-cyan-soft: #cffafe;
   --data-grey: #6b7280;
   --data-grey-soft: #f3f4f6;
 
@@ -110,8 +110,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #171717;
-    --foreground: #ffffff;
+    --background: #ffffff;
+    --foreground: #171717;
   }
 }
 

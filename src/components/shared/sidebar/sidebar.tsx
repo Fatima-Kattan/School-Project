@@ -2,18 +2,22 @@
 
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    LayoutGrid,
     Users,
     UserCircle,
     UserCog,
     Megaphone,
     LogOut,
     School,
-    User
+    User,
+    UserStar,
+    PanelLeftOpen,
+    PanelLeftClose
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface NavItem {
     label: string;
@@ -23,6 +27,7 @@ interface NavItem {
 
 export const Sidebar = () => {
     const pathname = usePathname();
+    const [isOpen, setIsOpen] = useState(true);
 
     const isActive = (href: string) => {
         if (href === '/dashboard') return pathname === href;
@@ -43,12 +48,12 @@ export const Sidebar = () => {
         {
             label: 'أولياء الأمور',
             href: '/dashboard/parents',
-            icon: <UserCircle size={20} />,
+            icon: <Users size={20} />,
         },
         {
             label: 'المدرسين',
             href: '/dashboard/teachers',
-            icon: <UserCog size={20} />,
+            icon: <UserStar size={20} />,
         },
         {
             label: 'الإعلانات',
@@ -66,43 +71,74 @@ export const Sidebar = () => {
                 href={item.href}
                 className={`
                     flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 text-sm
-                    ${active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}
+                    ${active ? 'bg-green-50 text-[#007353] font-semibold' : 'text-content-primary hover:bg-gray-50 hover:text-gray-900'}
                 `}
             >
-                <span className={active ? 'text-blue-600' : 'text-gray-400'}>
+                <span className={active ? 'text-[#007353]' : 'text-content-primary'}>
                     {item.icon}
                 </span>
-                <span className="font-cairo">{item.label}</span>
+                <span>{item.label}</span>
             </Link>
         );
     };
 
     return (
-        <aside className="fixed right-0 top-0 h-full w-[240px] bg-white border-l border-gray-100 flex flex-col overflow-y-auto shadow-lg shadow-gray-100/50 z-50 font-cairo">
-            {/* Header - School Name */}
-            <div className="flex flex-col items-center px-6 py-8 border-b border-gray-100">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100 mb-3">
-                    <span className="text-white font-bold text-2xl font-cairo">ث</span>
-                </div>
-                <h1 className="text-xl font-bold text-gray-800 font-cairo">ثانوية شرعية</h1>
-                <span className="text-xs text-gray-400 font-cairo mt-0.5">نظام إدارة المدرسة</span>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                {navItems.map(item => renderNavItem(item))}
-            </nav>
-
-            {/* Footer - Logout */}
-            <div className="border-t border-gray-100 p-4">
+        <>
+            {/* زر فتح الـ sidebar (يظهر فقط لما يكون مقفول) */}
+            {!isOpen && (
                 <button
-                    className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
-                    onClick={() => console.log('تسجيل الخروج')}
+                    onClick={() => setIsOpen(true)}
+                    className="fixed right-4 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-all duration-200"
+                    aria-label="فتح القائمة"
                 >
-                    <LogOut size={20} className="text-gray-400" />‍
-                    <span className="font-cairo">تسجيل الخروج</span>
+                    <PanelLeftClose color="#000f0b" size={22} />
                 </button>
-            </div>
-        </aside>
+            )}
+
+            {/* الـ Sidebar */}
+            <aside
+                className={`
+                    fixed right-0 top-0 h-full w-[280px] bg-white border-l border-[#e0e0e0] 
+                    shadow-lg shadow-gray-100/50 z-50 
+                    transition-transform duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+                `}
+            >
+
+                <div className="h-full flex flex-col overflow-y-auto">
+                    <div className="flex items-center px-6 py-8 border-b border-[#e0e0e0] gap-4 flex-shrink-0">
+                        <div className="flex-shrink-0">
+                            <Image src="/images/mianIcon.svg" alt="main icon" width={70} height={70} />
+                        </div>
+                        <div className="flex flex-col">
+                            <h1 className="text-l font-bold text-content-primary whitespace-nowrap">ثانوية شرعية</h1>
+                            <span className="text-xs text-content-secondary">الإدارة العامة</span>
+                        </div>
+
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            className="mr-auto w-11 h-11 bg-[#F7F7F7]  rounded-lg flex items-center justify-center  hover:bg-gray-50 transition-all duration-200"
+                            aria-label="إغلاق القائمة"
+                        >
+                            <PanelLeftOpen color="#000f0b" size={22} />
+                        </button>
+                    </div>
+                
+                    <nav className="flex-1 px-3 py-4 space-y-1">
+                        {navItems.map(item => renderNavItem(item))}
+                    </nav>
+
+                    <div className="border-t border-[#e0e0e0] p-4 flex-shrink-0">
+                        <button
+                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-content-critical hover:bg-red-50 transition-all duration-200"
+                            onClick={() => console.log('تسجيل الخروج')}
+                        >
+                            <LogOut size={20} className="text-content-critical" />
+                            <span>تسجيل الخروج</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 };
