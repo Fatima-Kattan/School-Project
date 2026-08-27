@@ -1,6 +1,54 @@
+/* app/globals.css */
+
 @import "tailwindcss";
 
 :root {
+  /* ===== Content Colors ===== */
+  --content-primary: #000f0b;
+  --content-brand-primary: #007353;
+  --content-primary-inverted: #FFFFFF;
+  --content-secondary: #47524f;
+  --content-success: #00a63e;
+  --content-warning: #d97706;
+  --content-critical: #dc2626;
+  --content-brand-secondary: #cf993f;
+  --content-disabled: #acacac;
+
+  /* ===== Background Colors ===== */
+  --bg-critical: #DC2626;
+  --bg-primary: #FFFFFF;
+  --bg-brand-soft: #F0F7F5;
+  --bg-brand-primary: #007353;
+  --bg-secondary: #F7F7F7;
+  --bg-success-soft: #E0F4E7;
+  --bg-critical-soft: #FAE5E5;
+  --bg-brand-very-soft: #F9FCFB;
+  --bg-warning: #D97706;
+  --bg-success: #00A63E;
+  --bg-warning-soft: #FCF2E7;
+
+  /* ===== Border Colors ===== */
+  --border--secondary: #ACACAC;
+  --border--secondary-soft:#E0E0E0;
+  --border--disabled:#ACACAC;
+  --border-brand-primary:#007353;
+  --border-critical:#DC2626;
+  --border-success:  #00A63E;
+  --border-primary:  #000F0B;
+  --border-warning:#D97706;
+
+  /* ===== Data Visualization ===== */
+  --data-blue: #2563eb;
+  --data-blue-soft: #dbeafe;
+  --data-purple: #7c3aed;
+  --data-purple-soft: #ede9fe;
+  --data-orange: #fa8022;
+  --data-orange-soft: #FFEDD5;
+  --data-cyan: #06B6D4;
+  --data-cyan-soft: #CFFAFE;
+  --data-grey: #6b7280;
+  --data-grey-soft: #f3f4f6;
+
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -8,14 +56,62 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* ===== Content Colors ===== */
+  --color-content-primary: var(--content-primary);
+  --color-content-brand-primary: var(--content-brand-primary);
+  --color-content-primary-inverted: var(--content-primary-inverted);
+  --color-content-secondary: var(--content-secondary);
+  --color-content-success: var(--content-success);
+  --color-content-warning: var(--content-warning);
+  --color-content-critical: var(--content-critical);
+  --color-content-brand-secondary: var(--content-brand-secondary);
+  --color-content-disabled: var(--content-disabled);
+
+  /* ===== Background Colors ===== */
+  --color-bg-critical: var(--bg-critical);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-brand-soft: var(--bg-brand-soft);
+  --color-bg-brand-primary: var(--bg-brand-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-success-soft: var(--bg-success-soft);
+  --color-bg-critical-soft: var(--bg-critical-soft);
+  --color-bg-brand-very-soft: var(--bg-brand-very-soft);
+  --color-bg-warning: var(--bg-warning);
+  --color-bg-success: var(--bg-success);
+  --color-bg-warning-soft: var(--bg-warning-soft);
+
+  /* ===== Border Colors ===== */
+  --color-border-secondary: var(--border-secondary);
+  --color-border-secondary-soft: var(--border-secondary-soft);
+  --color-border-disabled: var(--border-disabled);
+  --color-border-brand-primary: var(--border-brand-primary);
+  --color-border-critical: var(--border-critical);
+  --color-border-success: var(--border-success);
+  --color-border-primary: var(--border-primary);
+  --color-border-warning: var(--border-warning);
+
+  /* ===== Data Visualization ===== */
+  --color-data-blue: var(--data-blue);
+  --color-data-blue-soft: var(--data-blue-soft);
+  --color-data-purple: var(--data-purple);
+  --color-data-purple-soft: var(--data-purple-soft);
+  --color-data-orange: var(--data-orange);
+  --color-data-orange-soft: var(--data-orange-soft);
+  --color-data-cyan: var(--data-cyan);
+  --color-data-cyan-soft: var(--data-cyan-soft);
+  --color-data-grey: var(--data-grey);
+  --color-data-grey-soft: var(--data-grey-soft);
+
+  /* font type */
   --font-sans: var(--font-cairo), var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-     --background: #ffffff;
-    --foreground: #171717;
+    --background: #171717;
+    --foreground: #ffffff;
   }
 }
 
