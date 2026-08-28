@@ -2,7 +2,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Cairo } from 'next/font/google';
-import { Sidebar } from "@/components/shared/sidebar/sidebar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,8 +24,8 @@ export const metadata: Metadata = {
   title: "ثانوية شرعية",
   description: "نظام إدارة المدرسة الثانوية الشرعية",
   icons: {
-        icon: '/images/mianIcon.svg',  
-    },
+    icon: '/images/mianIcon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -42,12 +41,8 @@ export default function RootLayout({
       style={{ fontFamily: cairo.style.fontFamily }}
     >
       <body className="min-h-full flex bg-white text-gray-900">
-  
-        <Sidebar />
-      
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-          {children}
-        </main>
+
+        {children}
       </body>
     </html>
   );
