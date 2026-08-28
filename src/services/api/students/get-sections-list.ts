@@ -14,7 +14,7 @@ export const getSectionsList = async (
 }> => {
     try {
         const response = await fetch(
-            'http://localhost:8000/api/v1/dashboard/students/sections-list',
+            'http://localhost:8000/api/dashboard/students/sections-list',
             {
                 method: 'GET',
                 headers: {

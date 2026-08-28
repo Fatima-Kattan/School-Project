@@ -13,7 +13,7 @@ export const getClassesList = async (
 }> => {
     try {
         const response = await fetch(
-            'http://localhost:8000/api/v1/dashboard/students/classes-list',
+            'http://localhost:8000/api/dashboard/students/classes-list',
             {
                 method: 'GET',
                 headers: {

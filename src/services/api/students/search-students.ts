@@ -39,7 +39,7 @@ export const searchStudents = async (
 ): Promise<StudentsListResponse> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/search?q=${encodeURIComponent(
+            `http://localhost:8000/api/dashboard/students/search?q=${encodeURIComponent(
                 keyword
             )}`,
             {

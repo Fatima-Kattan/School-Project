@@ -6,7 +6,7 @@ export const deleteStudent = async (
 ): Promise<{ success: boolean; message: string }> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/${id}`,
+            `http://localhost:8000/api/dashboard/students/${id}`,
             {
                 method: 'DELETE',
                 headers: {

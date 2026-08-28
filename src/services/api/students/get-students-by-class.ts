@@ -39,7 +39,7 @@ export const getStudentsByClass = async (
 ): Promise<StudentsListResponse> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/class/${classId}`,
+            `http://localhost:8000/api/dashboard/students/class/${classId}`,
             {
                 method: 'GET',
                 headers: {

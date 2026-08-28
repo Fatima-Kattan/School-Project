@@ -14,7 +14,7 @@ export const getStudentsStatistics = async (
 }> => {
     try {
         const response = await fetch(
-            'http://localhost:8000/api/v1/dashboard/students/statistics',
+            'http://localhost:8000/api/dashboard/students/statistics',
             {
                 method: 'GET',
                 headers: {

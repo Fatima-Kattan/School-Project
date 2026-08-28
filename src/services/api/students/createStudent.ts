@@ -28,7 +28,7 @@ export const createStudent = async (
         console.log('📤 [createStudent] Creating:', data);
 
         const response = await fetch(
-            'http://localhost:8000/api/v1/dashboard/students',
+            'http://localhost:8000/api/dashboard/students',
             {
                 method: 'POST',
                 headers: {

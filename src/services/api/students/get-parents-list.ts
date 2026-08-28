@@ -14,7 +14,7 @@ export const getParentsList = async (
 }> => {
     try {
         const response = await fetch(
-            'http://localhost:8000/api/v1/dashboard/students/parents-list',
+            'http://localhost:8000/api/dashboard/students/parents-list',
             {
                 method: 'GET',
                 headers: {

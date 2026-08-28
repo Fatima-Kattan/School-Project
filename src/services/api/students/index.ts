@@ -1,6 +1,5 @@
 // src/services/api/students/index.ts
 
-// تصدير جميع الدوال والأنواع
 export { createStudent } from './createStudent';
 export type { CreateStudentData } from './createStudent';
 

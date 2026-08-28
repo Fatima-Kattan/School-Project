@@ -39,7 +39,7 @@ export const getStudentsBySection = async (
 ): Promise<StudentsListResponse> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/section/${sectionId}`,
+            `http://localhost:8000/api/dashboard/students/section/${sectionId}`,
             {
                 method: 'GET',
                 headers: {
