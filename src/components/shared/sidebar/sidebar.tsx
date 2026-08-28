@@ -108,7 +108,8 @@ export const Sidebar = () => {
                 <div className="h-full flex flex-col overflow-y-auto">
                     <div className="flex items-center px-6 py-8 border-b border-[#e0e0e0] gap-4 flex-shrink-0">
                         <div className="flex-shrink-0">
-                            <Image src="/images/mianIcon.svg" alt="main icon" width={70} height={70} />
+                            <Image src="/images/mianIcon.svg" alt="main icon" width={70} height={70} loading="eager"
+                                className="w-auto h-auto" />
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-l font-bold text-content-primary whitespace-nowrap">ثانوية شرعية</h1>
@@ -123,7 +124,7 @@ export const Sidebar = () => {
                             <PanelLeftOpen color="#000f0b" size={22} />
                         </button>
                     </div>
-                
+
                     <nav className="flex-1 px-3 py-4 space-y-1">
                         {navItems.map(item => renderNavItem(item))}
                     </nav>
