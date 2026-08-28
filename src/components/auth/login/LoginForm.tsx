@@ -1,13 +1,18 @@
 // components/auth/login/LoginForm.tsx
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // ✅ إضافة useRouter
 import Image from "next/image";
-import { LogIn, User, Lock, EyeOff, Eye } from "lucide-react";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 import styles from "./LoginForm.module.css";
 import { Input } from "@/components/shared/input/inpute";
+// ✅ استيراد دالة تسجيل الدخول من الخدمة
+import { loginAPI } from "@/services/api/auth/login";
 
 export default function LoginForm() {
+    const router = useRouter(); // ✅ إضافة router للتوجيه
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -20,13 +25,36 @@ export default function LoginForm() {
         setLoading(true);
 
         try {
-            console.log("Username:", username);
-            console.log("Password:", password);
+            // ✅ التحقق من صحة البيانات
+            if (!username.trim()) {
+                throw new Error("يرجى إدخال اسم المستخدم");
+            }
+            if (password.length < 6) {
+                throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+            }
 
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // ✅ ==========================================
+            // ✅ هنا يتم استدعاء دالة تسجيل الدخول
+            // ✅ وهي تقوم بـ:
+            // ✅ 1. إرسال طلب POST إلى /api/login
+            // ✅ 2. توليد FCM Token من المتصفح
+            // ✅ 3. حفظ FCM Token في Backend
+            // ✅ ==========================================
+            const loginData = await loginAPI({
+                user_name: username,
+                password: password,
+            });
 
-        } catch (err) {
-            setError("حدث خطأ في تسجيل الدخول");
+            // ✅ طباعة بيانات المستخدم في الكونسول للتأكد
+            console.log("✅ تم تسجيل الدخول بنجاح:", loginData.user);
+
+            // ✅ التوجيه إلى لوحة التحكم بعد نجاح تسجيل الدخول
+            router.push("/");
+
+        } catch (err: any) {
+            // ✅ عرض رسالة الخطأ للمستخدم
+            console.error("❌ خطأ في تسجيل الدخول:", err);
+            setError(err.message || "حدث خطأ في تسجيل الدخول");
         } finally {
             setLoading(false);
         }
@@ -97,7 +125,6 @@ export default function LoginForm() {
                                 labelClassName={styles.label}
                             />
                         </div>
-
 
                         <button
                             type="submit"
