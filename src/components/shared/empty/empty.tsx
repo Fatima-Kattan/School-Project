@@ -3,7 +3,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Button } from '../button/button';
+import { Button, ButtonVariant } from '../button/button';  
 import { Plus } from 'lucide-react';
 
 interface EmptyProps {
@@ -14,7 +14,7 @@ interface EmptyProps {
     icon?: ReactNode;
     image?: ReactNode;
     className?: string;
-    buttonVariant?: 'primary' | 'secondary' | 'outline';
+    buttonVariant?: ButtonVariant;  
     buttonIcon?: ReactNode;
     showButton?: boolean;
 }
@@ -27,18 +27,18 @@ export const Empty = ({
     icon,
     image,
     className = '',
-    buttonVariant = 'primary',
+    buttonVariant = 'primary',  
     buttonIcon,
     showButton = true,
 }: EmptyProps) => {
     return (
         <div className={`
-    flex flex-col items-center justify-center
-    p-8 py-12
-    text-center
-    bg-white rounded-xl border border-gray-200
-    ${className}
-    `}>
+            flex flex-col items-center justify-center
+            p-8 py-12
+            text-center
+            bg-white rounded-xl border border-gray-200
+            ${className}
+        `}>
             
             {image && (
                 <div className="mb-4">
@@ -52,18 +52,15 @@ export const Empty = ({
                 </div>
             )}
 
-            
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
                 {title}
             </h3>
 
-            
             <p className="text-sm text-gray-500 max-w-sm mb-6">
                 {description}
             </p>
 
-            
-            {showButton && buttonText && (
+            {showButton && buttonText && onButtonClick && (
                 <Button
                     variant={buttonVariant}
                     size="md"
