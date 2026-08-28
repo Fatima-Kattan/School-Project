@@ -41,12 +41,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         
         const getVariantClasses = () => {
             if (error) {
-                return 'border-red-500 ring-2 ring-red-200 focus:ring-red-300 focus:border-red-500';
+                return 'border-[#ACACAC] focus:border-[#007353] focus:ring-2 focus:ring-[#007353]/20';
             }
             if (variant === 'success') {
-                return 'border-green-500 ring-2 ring-green-200 focus:ring-green-300 focus:border-green-500';
+                return 'border-[#ACACAC] focus:border-[#007353] focus:ring-2 focus:ring-[#007353]/20';
             }
-            return 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+            return 'border-[#ACACAC] focus:border-[#007353] focus:ring-2 focus:ring-[#007353]/20';
         };
 
         const variantClasses = getVariantClasses();
@@ -57,8 +57,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 {label && (
                     <label
                         className={`
-            block text-sm font-medium text-gray-700 mb-1.5
-            ${required ? 'after:content-["*"] after:text-red-500 after:ml-0.5' : ''}
+            block text-sm font-medium text-[#000f0b] mb-1.5
+            ${required ? 'after:content-["(مطلوب)"] after:text-red-500 after:mr-0.5 after:mr-1' : ''}
             ${labelClassName}
             `}
                     >
@@ -67,9 +67,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 )}
 
                 {/* Input Container */}
-                <div className="relative">
+                <div className="relative flex items-center">
                     {icon && iconPosition === 'left' && (
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <span className="absolute left-3 text-[#000f0b] pointer-events-auto inline-flex items-center justify-center z-10">
                             {icon}
                         </span>
                     )}
@@ -79,11 +79,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         disabled={disabled}
                         className={`
             w-full px-4 py-2.5 rounded-lg border
-            bg-white text-gray-900 placeholder-gray-400
+            bg-white text-[#000f0b] placeholder-gray-400
             transition-all duration-200
             outline-none
             ${variantClasses}
-            ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'}
+            ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-[#007353]'}
             ${icon && iconPosition === 'left' ? 'pl-10' : ''}
             ${icon && iconPosition === 'right' ? 'pr-10' : ''}
             ${error ? 'pr-10' : ''}
@@ -96,14 +96,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     />
 
                     {icon && iconPosition === 'right' && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <span className="absolute right-3 text-[#000f0b] pointer-events-auto z-10">
                             {icon}
                         </span>
                     )}
 
                     {/* Error Icon */}
                     {error && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none">
+                        <span className="absolute right-3 text-red-500 pointer-events-none z-10">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>

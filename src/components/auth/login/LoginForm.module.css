@@ -1,0 +1,366 @@
+    /* components/auth/login/LoginForm.module.css */
+
+    /* ======================== */
+    /* الحاوية الرئيسية */
+    /* ======================== */
+    .container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: white;
+    }
+
+    /* ======================== */
+    /* القسم الأيمن - الأخضر */
+    /* ======================== */
+    .rightSection {
+    flex: 1;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    }
+
+    /* خلفية زخرفية */
+    .rightSection::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at 70% 50%,
+        rgba(255, 255, 255, 0.05) 0%,
+        transparent 50%
+    );
+    pointer-events: none;
+    }
+
+    .logoWrapper {
+    text-align: center;
+    color: white;
+    z-index: 1;
+    animation: fadeInUp 0.8s ease-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    }
+
+    /* أيقونة المدرسة */
+    .schoolIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    max-width: 400px;
+    aspect-ratio: 1/1;
+    margin-bottom: 1.5rem;
+    padding: 2rem;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+    }
+
+    .schoolImage {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 372px;
+    max-height: 262px;
+    object-fit: contain;
+    }
+
+    .schoolName {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0 0.25rem;
+    color: white;
+    }
+
+    .schoolSub {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* ======================== */
+    /* القسم الأيسر - الأبيض */
+    /* ======================== */
+    .leftSection {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: linear-gradient(
+        180deg,
+        #006838 0%,
+        #005c31f8 97.07%,
+        #004726e6 100%
+    );
+    background-image:
+        url("/images/pattern.svg"),
+        linear-gradient(180deg, #006838 0%, #005c31f8 97.07%, #004726e6 100%);
+    background-size: cover, cover;
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, center;
+    }
+
+    .loginWrapper {
+    width: 100%;
+    max-width: 420px;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    }
+
+    /* ======================== */
+    /* رأس الصفحة (تسجيل الدخول) */
+    /* ======================== */
+    .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    }
+
+    .loginIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--bg-brand-primary);
+    border-radius: 25%;
+    margin-bottom: 1rem;
+    color: white;
+    transition: transform 0.3s ease;
+    }
+
+    .loginIcon svg {
+    color: white;
+    }
+
+    .title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--content-primary);
+    margin: 0 0 0.5rem;
+    }
+
+    .subtitle {
+    color: var(--content-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    }
+
+    /* ======================== */
+    /* النموذج */
+    /* ======================== */
+    .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    }
+
+    /* رسالة الخطأ */
+    .errorMessage {
+    background: #fed7d7;
+    color: #c53030;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #feb2b2;
+    }
+
+    /* زر تسجيل الدخول */
+    .submitButton {
+    width: 100%;
+    padding: 0.85rem;
+    background: #007353;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    }
+
+    .submitButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 115, 83, 0.3);
+    background: #006144;
+    }
+
+    .submitButton:active:not(:disabled) {
+    transform: translateY(0);
+    }
+
+    .submitButton:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    }
+
+    .submitButton.loading {
+    background: #4a5568;
+    }
+
+    /* Spinner */
+    .spinner {
+    display: inline-block;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+    }
+
+    /* ======================== */
+    /* RTL & Responsive */
+    /* ======================== */
+
+    /* RTL Adjustments */
+    [dir="rtl"] .inputWrapper .input {
+    padding-right: 3rem;
+    padding-left: 1rem;
+    }
+
+    [dir="rtl"] .inputIcon {
+    right: 1rem;
+    left: auto;
+    }
+
+    /* Responsive - للأجهزة الصغيرة */
+    @media (max-width: 992px) {
+    .container {
+        flex-direction: column-reverse;
+    }
+
+    .rightSection {
+        min-height: 35vh;
+        padding: 1.5rem;
+    }
+
+    .rightSection::before {
+        display: none;
+    }
+
+    .schoolIcon {
+        width: 60%;
+        max-width: 250px;
+    }
+
+    .schoolImage {
+        max-width: 200px;
+        max-height: 200px;
+    }
+
+    .schoolName {
+        font-size: 1.5rem;
+    }
+
+    .leftSection {
+        padding: 1.5rem;
+    }
+
+    .loginWrapper {
+        max-width: 100%;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+    }
+
+    @media (max-width: 480px) {
+    .rightSection {
+        min-height: 30vh;
+        padding: 1rem;
+    }
+
+    .schoolIcon {
+        width: 50%;
+        max-width: 180px;
+        padding: 1rem;
+    }
+
+    .schoolImage {
+        max-width: 140px;
+        max-height: 140px;
+    }
+
+    .schoolName {
+        font-size: 1.25rem;
+    }
+
+    .schoolSub {
+        font-size: 0.85rem;
+    }
+
+    .leftSection {
+        padding: 1rem;
+    }
+
+    .loginIcon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .loginIcon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+    }
+
+    .input {
+        padding: 0.7rem 2.8rem 0.7rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .submitButton {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+    }
+    }
