@@ -24,6 +24,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ثانوية شرعية",
   description: "نظام إدارة المدرسة الثانوية الشرعية",
+  icons: {
+        icon: '/images/mianIcon.svg',  
+    },
 };
 
 export default function RootLayout({
