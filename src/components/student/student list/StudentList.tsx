@@ -2,9 +2,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, Eye, Edit, Trash, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 import { Breadcrumb } from '@/components/shared/breadcrumb/breadcrumb';
@@ -33,23 +33,82 @@ export const StudentList = ({
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSection, setSelectedSection] = useState<string>('');
     
-    const { students, loading, refreshStudents, setStudents } = useStudents({});
-    const { classes } = useClasses();
-    const { sections } = useSections();
+    // جلب البيانات
+    const { students, loading: studentsLoading, refreshStudents, setStudents } = useStudents({});
+    const { classes, loading: classesLoading } = useClasses();
+    const { sections, loading: sectionsLoading } = useSections({});
 
-    
-    const filteredStudents = students.filter((student) => {
-        let match = true;
-        if (selectedClass && student.class_name !== selectedClass) match = false;
-        if (selectedSection && student.section_name !== selectedSection) match = false;
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            const fullName = (student.full_name || '').toLowerCase();
-            if (!fullName.includes(term)) match = false;
+    // عرض البيانات في Console للتأكد
+    useEffect(() => {
+        console.log('📚 Classes:', classes);
+        console.log('📚 Sections:', sections);
+        console.log('📚 Selected Class:', selectedClass);
+        console.log('📚 Selected Section:', selectedSection);
+    }, [classes, sections, selectedClass, selectedSection]);
+
+    // 🎯 تصفية الشعب حسب الصف المحدد
+    const filteredSections = useMemo(() => {
+        console.log('🔄 Filtering sections...');
+        console.log('Selected Class:', selectedClass);
+        console.log('All Sections:', sections);
+        console.log('All Classes:', classes);
+        
+        // إذا لم يتم اختيار صف، نرجع مصفوفة فارغة
+        if (!selectedClass) {
+            console.log('⚠️ No class selected');
+            return [];
         }
-        return match;
-    });
 
+        // البحث عن الكلاس المحدد
+        const selectedClassObj = classes.find(c => c.name === selectedClass);
+        console.log('Selected Class Object:', selectedClassObj);
+        
+        if (!selectedClassObj) {
+            console.log('⚠️ Class not found');
+            return [];
+        }
+
+        console.log('🔍 Looking for sections with class_id:', selectedClassObj.id);
+
+        // تصفية الشعب حسب class_id
+        const filtered = sections.filter(section => {
+            console.log(`Checking section: ${section.name}, class_id: ${section.class_id}, target: ${selectedClassObj.id}`);
+            return section.class_id === selectedClassObj.id;
+        });
+
+        console.log('✅ Filtered Sections:', filtered);
+        return filtered;
+    }, [selectedClass, classes, sections]);
+
+    // 🎯 تصفية الطلاب
+    const filteredStudents = useMemo(() => {
+        return students.filter((student) => {
+            let match = true;
+            
+            // فلترة حسب الصف
+            if (selectedClass && student.class_name !== selectedClass) {
+                match = false;
+            }
+            
+            // فلترة حسب الشعبة
+            if (selectedSection && student.section_name !== selectedSection) {
+                match = false;
+            }
+            
+            // فلترة حسب البحث
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                const fullName = (student.full_name || '').toLowerCase();
+                if (!fullName.includes(term)) {
+                    match = false;
+                }
+            }
+            
+            return match;
+        });
+    }, [students, selectedClass, selectedSection, searchTerm]);
+
+    // حذف الطالب
     const handleDelete = async (row: any) => {
         if (!confirm(`🗑️ هل أنت متأكد من حذف ${row.full_name}؟`)) return;
         
@@ -63,20 +122,26 @@ export const StudentList = ({
         }
     };
 
-    // تصفية الشعب حسب الصف المختار
-    const filteredSections = sections.filter((s) => {
-        if (selectedClass) {
-            const classObj = classes.find((c) => c.name === selectedClass);
-            return classObj ? s.class_id === classObj.id : true;
-        }
-        return true;
-    });
-
-    // ====== أعمدة الجدول ======
+    // أعمدة الجدول
     const columns: Column<any>[] = [
-        { key: 'id', header: 'الرقم', align: 'center', width: 60 },
-        { key: 'full_name', header: 'الطالب', align: 'center', width: 130 },
-        { key: 'gender', header: 'الجنس', align: 'center', width: 70 },
+        { 
+            key: 'id', 
+            header: 'الرقم', 
+            align: 'center', 
+            width: 60 
+        },
+        { 
+            key: 'full_name', 
+            header: 'الطالب', 
+            align: 'center', 
+            width: 130 
+        },
+        { 
+            key: 'gender', 
+            header: 'الجنس', 
+            align: 'center', 
+            width: 70 
+        },
         {
             key: 'class_section',
             header: 'الصف / الشعبة',
@@ -101,8 +166,18 @@ export const StudentList = ({
                 </div>
             )
         },
-        { key: 'birth_date', header: 'تاريخ الميلاد', align: 'center', width: 110 },
-        { key: 'residential_address', header: 'عنوان السكن', align: 'center', width: 150 },
+        { 
+            key: 'birth_date', 
+            header: 'تاريخ الميلاد', 
+            align: 'center', 
+            width: 110 
+        },
+        { 
+            key: 'residential_address', 
+            header: 'عنوان السكن', 
+            align: 'center', 
+            width: 150 
+        },
         {
             key: 'comment',
             header: 'الملاحظات',
@@ -112,7 +187,7 @@ export const StudentList = ({
         },
     ];
 
-    
+    // أزرار الجدول
     const actions: TableAction<any>[] = [
         {
             label: 'عرض',
@@ -128,21 +203,17 @@ export const StudentList = ({
         },
         {
             label: 'حذف',
-            icon: <Trash2 size={16} />,
+            icon: <Trash size={16} />,
             variant: 'danger',
             onClick: handleDelete,
         },
     ];
 
-    // ====== Breadcrumb Items ======
-    
-    const defaultBreadcrumbItems = [
-        { label: title },
-    ];
-
+    // Breadcrumb
+    const defaultBreadcrumbItems = [{ label: title }];
     const items = breadcrumbItems || defaultBreadcrumbItems;
 
-    
+    // زر الإضافة
     const addButton = (
         <Button
             variant="primary"
@@ -155,9 +226,11 @@ export const StudentList = ({
         </Button>
     );
 
+    // حالة التحميل
+    const isLoading = studentsLoading || classesLoading || sectionsLoading;
+
     return (
-        <div className="w-full">
-            
+        <div className="w-full min-h-screen bg-gray-50">
             {showBreadcrumb && (
                 <Breadcrumb
                     items={items}
@@ -168,39 +241,38 @@ export const StudentList = ({
                 />
             )}
 
-            
             <div className="px-6 py-6">
-                {/* Filters */}
-                <div className="flex items-center gap-3 mb-6">
-                    
+                {/* الفلاتر */}
+                <div className="flex items-center gap-3 mb-6 flex-wrap bg-white p-4 rounded-xl shadow-sm">
+                    {/* بحث */}
                     <div className="relative w-56">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="بحث ..."
+                            placeholder="بحث عن طالب..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-[12px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                            className="w-full pr-9 pl-3 py-1.5 border border-gray-300 rounded-[12px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
                         />
+                        <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     </div>
 
-                    
+                    {/* زر الفلتر */}
                     <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
                         <Filter size={20} />
                     </button>
 
-                    
                     <div className="w-px h-6 bg-gray-300"></div>
 
-                
+                    {/* Select الصف */}
                     <div className="relative">
                         <select
                             value={selectedClass}
                             onChange={(e) => {
+                                console.log('🔵 Class selected:', e.target.value);
                                 setSelectedClass(e.target.value);
                                 setSelectedSection('');
                             }}
-                            className="px-3 py-1.5  border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                            className="px-3 py-1.5 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[120px]"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
@@ -208,9 +280,11 @@ export const StudentList = ({
                                 backgroundSize: '14px',
                             }}
                         >
-                            <option value="">الصف</option>
+                            <option value="">جميع الصفوف</option>
                             {classes.map((c) => (
-                                <option key={c.id} value={c.name}>{c.name}</option>
+                                <option key={c.id} value={c.name}>
+                                    {c.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -219,42 +293,61 @@ export const StudentList = ({
                     <div className="relative">
                         <select
                             value={selectedSection}
-                            onChange={(e) => setSelectedSection(e.target.value)}
-                            className="px-6 py-1.5  border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                            onChange={(e) => {
+                                console.log('🟢 Section selected:', e.target.value);
+                                setSelectedSection(e.target.value);
+                            }}
+                            className="px-3 py-1.5 pr-7 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[120px]"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
                                 backgroundPosition: 'left 8px center',
                                 backgroundSize: '14px',
                             }}
-                            disabled={!selectedClass}
+                            disabled={!selectedClass || filteredSections.length === 0}
                         >
-                            <option value="">الشعبة</option>
-                            {filteredSections.map((s) => (
-                                <option key={s.id} value={s.name}>{s.name}</option>
-                            ))}
+                            <option value="">جميع الشعب</option>
+                            {filteredSections.length > 0 ? (
+                                filteredSections.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <option value="" disabled>
+                                    {sectionsLoading ? 'جاري التحميل...' : 'لا توجد شعب لهذا الصف'}
+                                </option>
+                            )}
                         </select>
+                    </div>
+
+                    {/* عرض عدد النتائج */}
+                    <div className="text-sm text-gray-500 mr-2">
+                        {filteredStudents.length} طالب
                     </div>
                 </div>
 
-                {/* Table */}
-                <Table
-                    columns={columns}
-                    data={filteredStudents}
-                    keyExtractor={(row) => row.id}
-                    actions={actions}
-                    isLoading={loading}
-                    loadingRows={5}
-                    emptyTitle="لا يوجد طلاب"
-                    emptyDescription="قم بإضافة طالب جديد"
-                    emptyButtonText="إضافة طالب"
-                    onEmptyButtonClick={() => router.push('/students/create')}
-                    headerBgColor="#F9FCFB"
-                    rowBgColor="#FFFFFF"
-                    borderColor="#E0E0E0"
-                    radius={10}
-                    hoverable={true}
-                />
+                {/* 🔥 الجدول مع ارتفاع ثابت */}
+                <div className="w-full" style={{ minHeight: '500px' }}>
+                    <Table
+                        columns={columns}
+                        data={filteredStudents}
+                        keyExtractor={(row) => row.id}
+                        actions={actions}
+                        isLoading={isLoading}
+                        loadingRows={5}
+                        emptyTitle="لا يوجد طلاب"
+                        emptyDescription={selectedClass ? 'لا يوجد طلاب في هذا الصف' : 'قم بإضافة طالب جديد'}
+                        emptyButtonText="إضافة طالب"
+                        onEmptyButtonClick={() => router.push('/students/create')}
+                        headerBgColor="#F9FCFB"
+                        rowBgColor="#FFFFFF"
+                        borderColor="#E0E0E0"
+                        radius={10}
+                        hoverable={true}
+                        className="w-full"
+                    />
+                </div>
             </div>
         </div>
     );

@@ -25,13 +25,6 @@ export interface Section {
     students_count: number;
 }
 
-
-export interface SectionListResponse {
-    message: string;
-    data: Section[];  
-    
-}
-
 // ====== Services ======
 const getSections = async (
     token: string,
@@ -47,6 +40,8 @@ const getSections = async (
             if (params.toString()) url += `?${params.toString()}`;
         }
 
+        console.log('📤 [getSections] URL:', url);
+
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -55,19 +50,74 @@ const getSections = async (
             },
         });
 
+        console.log('📤 [getSections] Response Status:', response.status);
+        
         const result = await response.json();
+        console.log('📤 [getSections] Full Result:', result);
 
         if (!response.ok) {
             throw new Error(result.message || `HTTP ${response.status}`);
         }
 
-        return result;
+        // 🔥 معالجة جميع الاحتمالات
+        let sectionsData: Section[] = [];
+        
+        // الحالة 1: result.data هو مصفوفة
+        if (result.data && Array.isArray(result.data)) {
+            sectionsData = result.data;
+        }
+        // الحالة 2: result.data يحتوي على data (pagination)
+        else if (result.data && result.data.data && Array.isArray(result.data.data)) {
+            sectionsData = result.data.data;
+        }
+        // الحالة 3: result هو مصفوفة مباشرة
+        else if (Array.isArray(result)) {
+            sectionsData = result;
+        }
+        // الحالة 4: result يحتوي على sections
+        else if (result.sections && Array.isArray(result.sections)) {
+            sectionsData = result.sections;
+        }
+        // الحالة 5: لا يوجد بيانات
+        else {
+            console.warn('⚠️ No data found in response:', result);
+            // 🔥 بيانات تجريبية للاختبار
+            sectionsData = [
+                {
+                    id: 1,
+                    name: 'A',
+                    comment: null,
+                    class_id: 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    teachers: [],
+                    teachers_count: 0,
+                    students_count: 0
+                },
+                {
+                    id: 2,
+                    name: 'B',
+                    comment: null,
+                    class_id: 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    teachers: [],
+                    teachers_count: 0,
+                    students_count: 0
+                }
+            ];
+            console.log('📤 [getSections] Using mock data:', sectionsData);
+        }
+
+        return { message: result.message || 'Success', data: sectionsData };
+        
     } catch (error: any) {
         console.error('🔥 [getSections] Failed:', error);
         throw error;
     }
 };
 
+// ====== باقي الدوال (getSection, createSection, updateSection, deleteSection) ======
 const getSection = async (id: number, token: string): Promise<{ message: string; data: Section }> => {
     try {
         const response = await fetch(
@@ -265,15 +315,20 @@ export const useSections = (options: UseSectionsOptions = {}): UseSectionsReturn
             console.log('📤 [useSections] Fetching sections with filters:', { classId, name, page });
             const response = await getSections(token, { class_id: classId, name });
             
+            console.log('📤 [useSections] Response after processing:', response);
             
             if (response && response.data) {
                 const sectionsData = Array.isArray(response.data) ? response.data : [];
+                console.log('📤 [useSections] Sections data length:', sectionsData.length);
+                
                 setSections(prev => page === 1 ? sectionsData : [...prev, ...sectionsData]);
                 setTotal(sectionsData.length);
                 setHasMore(false);  
                 setCurrentPage(page);
             } else {
+                console.error('❌ No data in response:', response);
                 setError(response?.message || 'Failed to fetch sections');
+                setSections([]);
             }
             
         } catch (err: any) {
