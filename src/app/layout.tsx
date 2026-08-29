@@ -42,7 +42,6 @@ export default function RootLayout({
       style={{ fontFamily: cairo.style.fontFamily }}
     >
       <body className="min-h-full flex bg-white text-gray-900">
-        <Sidebar />
         {children}
       </body>
     </html>
