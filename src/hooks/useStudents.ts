@@ -2,9 +2,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-
-// ==================== تعريف الأنواع ====================
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface Student {
     id: number;
@@ -33,7 +31,6 @@ export interface Student {
     updated_at?: string;
 }
 
-// تعريف استجابة الـ API العامة
 interface ApiResponse<T> {
     success: boolean;
     data: T;
@@ -41,14 +38,13 @@ interface ApiResponse<T> {
     total?: number;
 }
 
-// ==================== دوال API ====================
-
+// ====== Services ======
 const getStudents = async (
     token: string,
     filters?: { class_id?: number; section_id?: number }
 ): Promise<ApiResponse<Student[]>> => {
     try {
-        let url = 'http://localhost:8000/api/v1/dashboard/students';
+        let url = 'http://localhost:8000/api/dashboard/students';
 
         if (filters) {
             const params = new URLSearchParams();
@@ -86,7 +82,7 @@ const getStudent = async (
 ): Promise<ApiResponse<Student>> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/${id}`,
+            `http://localhost:8000/api/dashboard/students/${id}`,
             {
                 method: 'GET',
                 headers: {
@@ -115,7 +111,7 @@ const getStudentsByClass = async (
 ): Promise<ApiResponse<Student[]>> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/class/${classId}`,
+            `http://localhost:8000/api/dashboard/students/class/${classId}`,
             {
                 method: 'GET',
                 headers: {
@@ -144,7 +140,7 @@ const getStudentsBySection = async (
 ): Promise<ApiResponse<Student[]>> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/section/${sectionId}`,
+            `http://localhost:8000/api/dashboard/students/section/${sectionId}`,
             {
                 method: 'GET',
                 headers: {
@@ -173,7 +169,7 @@ const searchStudents = async (
 ): Promise<ApiResponse<Student[]>> => {
     try {
         const response = await fetch(
-            `http://localhost:8000/api/v1/dashboard/students/search?q=${encodeURIComponent(
+            `http://localhost:8000/api/dashboard/students/search?q=${encodeURIComponent(
                 keyword
             )}`,
             {
@@ -198,7 +194,7 @@ const searchStudents = async (
     }
 };
 
-// ==================== Hook ====================
+// ====== Hook ======
 
 interface UseStudentsOptions {
     initialPage?: number;
@@ -246,16 +242,33 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     const [currentPage, setCurrentPage] = useState(initialPage);
     const [hasMore, setHasMore] = useState(false);
 
+    
+    const isFetching = useRef(false);
+    const isMounted = useRef(true);
+
     const getToken = useCallback(() => {
-        return localStorage.getItem('token') || '';
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('token');
+            console.log('🔑 Token:', token ? '✅ موجود' : '❌ غير موجود');
+            return token || '';
+        }
+        return '';
     }, []);
 
     const fetchStudents = useCallback(async (page: number, isLoadMore = false) => {
+        
+        if (isFetching.current) {
+            console.log('⛔ جلب بيانات جاري بالفعل، تم تجاهل الطلب');
+            return;
+        }
+        isFetching.current = true;
+
         const token = getToken();
 
         if (!token) {
             setError('لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول.');
             setLoading(false);
+            isFetching.current = false;
             return;
         }
 
@@ -263,127 +276,105 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
             setLoading(true);
             setError(null);
 
-            // حالة جلب طالب واحد
+            
             if (singleStudentMode && studentId) {
                 console.log('📤 [useStudents] Fetching single student:', studentId);
-                
                 const response = await getStudent(studentId, token);
                 
                 if (response.success && response.data) {
-                    console.log('✅ [useStudents] Single student loaded');
                     setStudents([response.data]);
                 } else {
                     setError(response.message || 'Student not found');
                     setStudents([]);
                 }
                 setHasMore(false);
+                isFetching.current = false;
                 return;
             }
 
-            // حالة جلب الطلاب حسب الصف
+            
             if (classId) {
                 console.log('📤 [useStudents] Fetching students by class:', classId);
-                
                 const response = await getStudentsByClass(classId, token);
                 
                 if (response.success && response.data) {
-                    console.log('✅ [useStudents] Students by class loaded:', response.data.length);
-                    
                     if (isLoadMore) {
                         setStudents(prev => [...prev, ...response.data]);
                     } else {
                         setStudents(response.data);
                     }
-                    
-                    setHasMore(false);
                 } else {
                     setError(response.message || 'Failed to fetch students by class');
                 }
+                setHasMore(false);
+                isFetching.current = false;
                 return;
             }
 
-            // حالة جلب الطلاب حسب الشعبة
+            
             if (sectionId) {
                 console.log('📤 [useStudents] Fetching students by section:', sectionId);
-                
                 const response = await getStudentsBySection(sectionId, token);
                 
                 if (response.success && response.data) {
-                    console.log('✅ [useStudents] Students by section loaded:', response.data.length);
-                    
                     if (isLoadMore) {
                         setStudents(prev => [...prev, ...response.data]);
                     } else {
                         setStudents(response.data);
                     }
-                    
-                    setHasMore(false);
                 } else {
                     setError(response.message || 'Failed to fetch students by section');
                 }
+                setHasMore(false);
+                isFetching.current = false;
                 return;
             }
 
-            // حالة البحث
+            
             if (searchKeyword) {
                 console.log('🔍 [useStudents] Searching students:', searchKeyword);
-                
                 const response = await searchStudents(searchKeyword, token);
                 
                 if (response.success && response.data) {
-                    console.log('✅ [useStudents] Search results loaded:', response.data.length);
-                    
                     if (isLoadMore) {
                         setStudents(prev => [...prev, ...response.data]);
                     } else {
                         setStudents(response.data);
                     }
-                    
-                    setHasMore(false);
                 } else {
                     setError(response.message || 'Search failed');
                 }
+                setHasMore(false);
+                isFetching.current = false;
                 return;
             }
 
-            // الحالة الافتراضية: جلب جميع الطلاب مع الفلاتر
             console.log('📤 [useStudents] Fetching all students with filters:', filters);
-            
             const response = await getStudents(token, filters);
             
             if (response.success && response.data) {
                 const studentsData = response.data || [];
-                
-                console.log('✅ [useStudents] Students loaded:', studentsData.length);
-                
                 if (isLoadMore) {
                     setStudents(prev => [...prev, ...studentsData]);
                 } else {
                     setStudents(studentsData);
                 }
-                
-                setHasMore(false);
             } else {
                 setError(response.message || 'Failed to fetch students');
             }
+            setHasMore(false);
             
         } catch (err: any) {
-            console.error('🔥 [useStudents] Error in fetchStudents:', err);
+            console.error('🔥 [useStudents] Error:', err);
             setError(err.message || 'A connection error occurred');
             setStudents([]);
         } finally {
             setLoading(false);
+            isFetching.current = false;
         }
-    }, [
-        getToken,
-        singleStudentMode,
-        studentId,
-        classId,
-        sectionId,
-        searchKeyword,
-        filters,
-    ]);
+    }, [getToken, singleStudentMode, studentId, classId, sectionId, searchKeyword, filters]);
 
+    
     useEffect(() => {
         if (initialStudents.length > 0 && !classId && !sectionId && !searchKeyword && !studentId) {
             console.log('📦 [useStudents] Using initial students:', initialStudents.length);
@@ -391,16 +382,17 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
             setLoading(false);
             setHasMore(false);
         } else {
-            fetchStudents(1, false);
+            
+            const timer = setTimeout(() => {
+                fetchStudents(1, false);
+            }, 200);
+            return () => clearTimeout(timer);
         }
-    }, [
-        initialStudents.length,
-        classId,
-        sectionId,
-        searchKeyword,
-        studentId,
-        fetchStudents,
-    ]);
+
+        return () => {
+            isMounted.current = false;
+        };
+    }, [classId, sectionId, searchKeyword, studentId]);
 
     const loadMore = () => {
         if (hasMore && !loading && !hideInfiniteScroll) {
@@ -414,6 +406,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     const refreshStudents = () => {
         console.log('🔄 [useStudents] Refreshing students...');
         setCurrentPage(1);
+        isFetching.current = false;
         fetchStudents(1, false);
     };
 
