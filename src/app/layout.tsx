@@ -1,9 +1,8 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Cairo } from 'next/font/google';
 import "./globals.css";
-import { Sidebar } from "@/components/shared/sidebar/sidebar";
+import ClientLayout from './ClientLayout';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +41,7 @@ export default function RootLayout({
       style={{ fontFamily: cairo.style.fontFamily }}
     >
       <body className="min-h-full flex bg-white text-gray-900">
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

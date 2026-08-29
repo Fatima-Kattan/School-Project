@@ -29,6 +29,15 @@ export const Sidebar = () => {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(true);
 
+    // دالة مساعدة لإرسال الحالة إلى الـ Layout
+    const notifyLayout = (open: boolean) => {
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('sidebarToggle', { 
+                detail: { isOpen: open } 
+            }));
+        }
+    };
+
     const isActive = (href: string) => {
         if (href === '/dashboard') return pathname === href;
         return pathname.startsWith(href);
@@ -87,7 +96,10 @@ export const Sidebar = () => {
             {/* زر فتح الـ sidebar (يظهر فقط لما يكون مقفول) */}
             {!isOpen && (
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => {
+                        setIsOpen(true);
+                        notifyLayout(true); // <- أضف هذا السطر
+                    }}
                     className="fixed right-4 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-all duration-200"
                     aria-label="فتح القائمة"
                 >
@@ -104,7 +116,6 @@ export const Sidebar = () => {
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 `}
             >
-
                 <div className="h-full flex flex-col overflow-y-auto">
                     <div className="flex items-center px-6 py-8 border-b border-[#e0e0e0] gap-4 flex-shrink-0">
                         <div className="flex-shrink-0">
@@ -117,8 +128,11 @@ export const Sidebar = () => {
                         </div>
 
                         <button
-                            onClick={() => setIsOpen(false)}
-                            className="mr-auto w-11 h-11 bg-[#F7F7F7]  rounded-lg flex items-center justify-center  hover:bg-gray-50 transition-all duration-200"
+                            onClick={() => {
+                                setIsOpen(false);
+                                notifyLayout(false); // <- أضف هذا السطر
+                            }}
+                            className="mr-auto w-11 h-11 bg-[#F7F7F7] rounded-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200"
                             aria-label="إغلاق القائمة"
                         >
                             <PanelLeftOpen color="#000f0b" size={22} />
