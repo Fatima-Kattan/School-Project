@@ -46,27 +46,27 @@ export const Sidebar = () => {
     const navItems: NavItem[] = [
         {
             label: 'الصفوف والشعب',
-            href: '/dashboard/classes',
+            href: '/classes',
             icon: <School size={20} />,
         },
         {
             label: 'الطالب',
-            href: '/dashboard/students',
+            href: '/students',
             icon: <User size={20} />,
         },
         {
             label: 'أولياء الأمور',
-            href: '/dashboard/parents',
+            href: '/parents',
             icon: <Users size={20} />,
         },
         {
             label: 'المدرسين',
-            href: '/dashboard/teachers',
+            href: '/teachers',
             icon: <UserStar size={20} />,
         },
         {
             label: 'الإعلانات',
-            href: '/dashboard/announcements',
+            href: '/announcements',
             icon: <Megaphone size={20} />,
         },
     ];
@@ -95,17 +95,39 @@ export const Sidebar = () => {
         <>
             {/* زر فتح الـ sidebar (يظهر فقط لما يكون مقفول) */}
             {!isOpen && (
-                <button
-                    onClick={() => {
-                        setIsOpen(true);
-                        notifyLayout(true); // <- أضف هذا السطر
-                    }}
-                    className="fixed right-4 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-all duration-200"
-                    aria-label="فتح القائمة"
-                >
-                    <PanelLeftClose color="#000f0b" size={22} />
-                </button>
-            )}
+    <button
+        onClick={() => {
+            setIsOpen(true);
+            notifyLayout(true);
+        }}
+        onMouseEnter={() => {
+            // لما الماوس يدخل على الزر
+            const btn = document.getElementById('sidebar-toggle-btn');
+            if (btn) {
+                btn.style.transform = 'translateX(0px)';
+                btn.style.opacity = '1';
+            }
+        }}
+        onMouseLeave={() => {
+            // لما الماوس يطلع من الزر
+            const btn = document.getElementById('sidebar-toggle-btn');
+            if (btn) {
+                btn.style.transform = 'translateX(calc(100% - 16px))';
+                btn.style.opacity = '0.3';
+            }
+        }}
+        id="sidebar-toggle-btn"
+        className="fixed right-0 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-l-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-all duration-300 ease-in-out"
+        style={{
+            transform: 'translateX(calc(100% - 16px))',
+            opacity: '0.3',
+            transition: 'all 0.3s ease-in-out'
+        }}
+        aria-label="فتح القائمة"
+    >
+        <PanelLeftClose color="#000f0b" size={22} />
+    </button>
+)}
 
             {/* الـ Sidebar */}
             <aside
