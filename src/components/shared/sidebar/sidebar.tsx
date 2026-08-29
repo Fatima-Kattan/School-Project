@@ -32,8 +32,8 @@ export const Sidebar = () => {
     // دالة مساعدة لإرسال الحالة إلى الـ Layout
     const notifyLayout = (open: boolean) => {
         if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('sidebarToggle', { 
-                detail: { isOpen: open } 
+            window.dispatchEvent(new CustomEvent('sidebarToggle', {
+                detail: { isOpen: open }
             }));
         }
     };
@@ -94,34 +94,36 @@ export const Sidebar = () => {
     return (
         <>
             {/* زر فتح الـ sidebar (يظهر فقط لما يكون مقفول) */}
-            {!isOpen && (
+          {!isOpen && (
     <button
         onClick={() => {
             setIsOpen(true);
             notifyLayout(true);
         }}
         onMouseEnter={() => {
-            // لما الماوس يدخل على الزر
             const btn = document.getElementById('sidebar-toggle-btn');
             if (btn) {
                 btn.style.transform = 'translateX(0px)';
                 btn.style.opacity = '1';
+                btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.2)'; // ظل قوي
             }
         }}
         onMouseLeave={() => {
-            // لما الماوس يطلع من الزر
             const btn = document.getElementById('sidebar-toggle-btn');
             if (btn) {
                 btn.style.transform = 'translateX(calc(100% - 16px))';
-                btn.style.opacity = '0.3';
+                btn.style.opacity = '0.4';
+                btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.25)'; // ظل قوي
             }
         }}
         id="sidebar-toggle-btn"
-        className="fixed right-0 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-l-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition-all duration-300 ease-in-out"
+        className="fixed right-0 top-10 z-[100] w-11 h-11 bg-[#F7F7F7] rounded-l-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-300 ease-in-out"
         style={{
             transform: 'translateX(calc(100% - 16px))',
-            opacity: '0.3',
-            transition: 'all 0.3s ease-in-out'
+            opacity: '0.4',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.25)', 
+            transition: 'all 0.3s ease-in-out',
+            cursor: 'pointer',
         }}
         aria-label="فتح القائمة"
     >
