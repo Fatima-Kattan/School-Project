@@ -6,7 +6,7 @@ import { StudentList } from '@/components/student/student list/StudentList';
 
 export default function StudentsPage() {
     return (
-        <div className="mr-64">
+        <div className="w-full">
             <StudentList />
         </div>
     );
