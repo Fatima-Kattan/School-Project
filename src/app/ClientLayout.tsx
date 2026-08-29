@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from "@/components/shared/sidebar/sidebar";
 
 export default function ClientLayout({
@@ -9,8 +10,12 @@ export default function ClientLayout({
     children: React.ReactNode;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const pathname = usePathname();
 
-    // استمع لتغييرات السايد بار من خلال حدث مخصص
+    // المسارات التي لا يجب أن يظهر فيها السايد بار مطلقاً
+    const hiddenPaths = ['/login'];
+    const isSidebarHiddenRoute = hiddenPaths.includes(pathname || '');
+
     useEffect(() => {
         const handleSidebarToggle = (event: CustomEvent) => {
             setIsSidebarOpen(event.detail.isOpen);
@@ -25,18 +30,22 @@ export default function ClientLayout({
 
     return (
         <>
-            {/* السايد بار */}
-            <div
-                className={`${isSidebarOpen ? 'w-70' : 'w-0 overflow-hidden'
+            {/* لا يتم رندر الحاوية بأكملها إذا كان المسار ضمن hiddenPaths */}
+            {!isSidebarHiddenRoute && (
+                <div
+                    className={`${
+                        isSidebarOpen ? 'w-70' : 'w-0 overflow-hidden'
                     } flex-shrink-0 bg-gray-100 border-r border-gray-200 gap-2 transition-all duration-300`}
-            >
-                <Sidebar />
-            </div>
+                >
+                    <Sidebar />
+                </div>
+            )}
 
-            {/* المحتوى الرئيسي - يأخذ كامل العرض عند غلق السايد بار */}
+            {/* المحتوى الرئيسي */}
             <main
-                className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarOpen ? '' : 'w-full'
-                    }`}
+                className={`flex-1 min-w-0 transition-all duration-300 ${
+                    isSidebarOpen || isSidebarHiddenRoute ? 'w-full' : ''
+                }`}
             >
                 {children}
             </main>
