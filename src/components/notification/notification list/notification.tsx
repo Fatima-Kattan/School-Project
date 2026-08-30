@@ -5,8 +5,10 @@
 import React, { useState, useEffect } from 'react';
 import { Breadcrumb } from '@/components/shared/breadcrumb/breadcrumb';
 import { Empty } from '@/components/shared/empty/empty';
-import { Plus, SquarePen, User, Users, Clock, Calendar, Trash } from 'lucide-react';
+import { Plus, SquarePen, User, Users, Clock, Calendar, Trash, X } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
+import { NotificationForm } from '@/components/notification/notification form/notificationForm';
+import { NotificationDelete } from '@/components/notification/notifiction delete/notificationDelete'; // ✅ استيراد مكون الحذف
 
 interface Notification {
     id: number;
@@ -20,16 +22,17 @@ function NotificationPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
+    const [deletingNotification, setDeletingNotification] = useState<Notification | null>(null); // ✅ للحذف
 
     const breadcrumbItems = [{ label: 'الإعلانات' }];
 
-    // 🔑 دالة جلب التوكن - استخدم access_token (الشغال في Postman)
-
+    // 🔑 دالة جلب التوكن
     const getToken = (): string => {
         try {
-            // ✅ استخدم auth_token (نفس الاسم من login)
             const token = localStorage.getItem('auth_token');
-
+            
             if (token && token.length > 10) {
                 console.log('✅ Token found:', token.substring(0, 20) + '...');
                 return token;
@@ -53,7 +56,7 @@ function NotificationPage() {
             const token = getToken();
 
             if (!token) {
-                setError('❌ لم يتم العثور على access_token. الرجاء تسجيل الدخول');
+                setError('❌ لم يتم العثور على التوكن. الرجاء تسجيل الدخول');
                 setLoading(false);
                 return;
             }
@@ -107,9 +110,98 @@ function NotificationPage() {
         loadNotifications();
     }, []);
 
-    const handleAddClick = () => console.log('إضافة إعلان جديد');
-    const handleEdit = (id: number) => console.log('تعديل:', id);
-    const handleDelete = (id: number) => console.log('حذف:', id);
+    // ✅ فتح مودال الإضافة
+    const handleAddClick = () => {
+        console.log('➕ [NotificationPage] Opening form dialog');
+        setEditingNotification(null);
+        setIsModalOpen(true);
+    };
+
+    // ✅ فتح مودال التعديل
+    const handleEditClick = (notification: Notification) => {
+        console.log('✏️ [NotificationPage] Opening edit dialog for:', notification.title);
+        setEditingNotification(notification);
+        setIsModalOpen(true);
+    };
+
+    // ✅ فتح مودال الحذف
+    const handleDeleteClick = (notification: Notification) => {
+        console.log('🗑️ [NotificationPage] Opening delete dialog for:', notification.title);
+        setDeletingNotification(notification);
+    };
+
+    // ✅ إغلاق المودال
+    const handleCloseModal = () => {
+        console.log('🔴 [NotificationPage] Closing form dialog');
+        setIsModalOpen(false);
+        setEditingNotification(null);
+        setDeletingNotification(null);
+    };
+
+    // ✅ حذف إعلان
+    const handleDelete = async (id: number) => {
+        if (!confirm('🗑️ هل أنت متأكد من حذف هذا الإعلان؟')) return;
+
+        try {
+            const token = getToken();
+            if (!token) {
+                alert('❌ لم يتم العثور على التوكن. الرجاء تسجيل الدخول');
+                return;
+            }
+
+            const response = await fetch(
+                `http://localhost:8000/api/notifications/${id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.status === 401) {
+                throw new Error('جلسة غير صالحة - الرجاء تسجيل الدخول مرة أخرى');
+            }
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || `HTTP ${response.status}`);
+            }
+
+            if (result.status === 'success') {
+                alert('✅ تم حذف الإعلان بنجاح');
+                loadNotifications(); // تحديث القائمة
+            } else {
+                throw new Error(result.message || 'فشل الحذف');
+            }
+        } catch (err: any) {
+            console.error('❌ Delete error:', err);
+            alert(`❌ فشل الحذف: ${err.message}`);
+        }
+    };
+
+    // ✅ عند نجاح الحفظ
+    const handleFormSuccess = () => {
+        console.log('✅ [NotificationPage] Notification saved successfully!');
+        setIsModalOpen(false);
+        setEditingNotification(null);
+        loadNotifications(); // تحديث القائمة
+    };
+
+    // ✅ عند نجاح الحذف
+    const handleDeleteSuccess = () => {
+        console.log('✅ [NotificationPage] Notification deleted successfully!');
+        setDeletingNotification(null);
+        loadNotifications(); // تحديث القائمة
+    };
+
+    // ✅ عند إلغاء النموذج
+    const handleFormCancel = () => {
+        handleCloseModal();
+    };
 
     const actionButton = (
         <Button
@@ -125,7 +217,7 @@ function NotificationPage() {
     const formatDate = (dateString: string) => {
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('ar-SA', {
+            return date.toLocaleDateString('en-SA', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
@@ -138,7 +230,7 @@ function NotificationPage() {
     const formatTime = (dateString: string) => {
         try {
             const date = new Date(dateString);
-            return date.toLocaleTimeString('ar-SA', {
+            return date.toLocaleTimeString('en-SA', {
                 hour: '2-digit',
                 minute: '2-digit',
             });
@@ -189,7 +281,7 @@ function NotificationPage() {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <Empty
                                 title="لا إعلانات مضافة بعد"
-                                description="أضف إعلانات الآن"
+                                description="أضف إعلانات الآن وانشغلها الآن أو لاحقاً لمن تريد من طلب أو مدرسين ..."
                                 buttonText="إضافة إعلان"
                                 onButtonClick={handleAddClick}
                                 buttonVariant="primary"
@@ -215,7 +307,7 @@ function NotificationPage() {
                                         <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                                             <span className="flex items-center gap-1.5 text-[#007353]">
                                                 <User size={14} className="text-[#007353]" />
-                                                النظام
+                                                بواسطة الادارة العامة
                                             </span>
                                             <span className="flex items-center gap-1.5">
                                                 <Users size={14} className="text-gray-400" />
@@ -230,9 +322,10 @@ function NotificationPage() {
                                                 {formatTime(notification.created_at)}
                                             </span>
                                         </div>
+                                        {/* ✅ أزرار التعديل والحذف */}
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => handleDelete(notification.id)}
+                                                onClick={() => handleDeleteClick(notification)} // ✅ فتح مودال الحذف
                                                 className="flex items-center justify-center w-9 h-9 rounded-xl transition-colors duration-200"
                                                 style={{
                                                     backgroundColor: '#F7F7F7',
@@ -251,7 +344,7 @@ function NotificationPage() {
                                                 <Trash size={20} />
                                             </button>
                                             <button
-                                                onClick={() => handleEdit(notification.id)}
+                                                onClick={() => handleEditClick(notification)}
                                                 className="flex items-center justify-center w-9 h-9 rounded-xl transition-colors duration-200"
                                                 style={{
                                                     backgroundColor: '#F7F7F7',
@@ -275,6 +368,139 @@ function NotificationPage() {
                     )}
                 </div>
             </div>
+
+            {/* ✅ مودال الإضافة والتعديل */}
+            {isModalOpen && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999999,
+                        padding: '20px',
+                    }}
+                    onClick={handleCloseModal}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '25px',
+                            padding: '30px',
+                            maxWidth: '600px',
+                            width: '100%',
+                            maxHeight: 'auto',
+                            overflow: 'visible',
+                            position: 'relative',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* زر الإغلاق */}
+                        <button
+                            onClick={handleCloseModal}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                left: '20px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#999',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <h2 style={{
+                            fontSize: '22px',
+                            fontWeight: 'bold',
+                            marginBottom: '24px',
+                            color: '#1a1a1a',
+                            textAlign: 'right',
+                        }}>
+                            {editingNotification ? 'تعديل إعلان' : 'إضافة إعلان '}
+                        </h2>
+
+                        <div style={{
+                            overflow: 'visible',
+                        }}>
+                            <NotificationForm
+                                mode={editingNotification ? "edit" : "create"}
+                                initialData={editingNotification || undefined}
+                                onSuccess={handleFormSuccess}
+                                onCancel={handleFormCancel}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ مودال حذف الإعلان */}
+            {deletingNotification && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999999,
+                        padding: '25px',
+                    }}
+                    onClick={() => setDeletingNotification(null)}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '20px',
+                            padding: '30px',
+                            maxWidth: '500px',
+                            width: '100%',
+                            maxHeight: 'auto',
+                            overflow: 'visible',
+                            position: 'relative',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* زر الإغلاق */}
+                        <button
+                            onClick={() => setDeletingNotification(null)}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                left: '20px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#999',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <NotificationDelete
+                            notification={deletingNotification}
+                            onSuccess={handleDeleteSuccess}
+                            onCancel={() => setDeletingNotification(null)}
+                        />
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

@@ -1,4 +1,4 @@
-import Notification from "@/components/notification/notification";
+import Notification from "@/components/notification/notification list/notification";
 
 export default function NotificationsPage() {
     return (
