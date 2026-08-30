@@ -13,6 +13,7 @@ import { useClasses } from '@/hooks/useClass';
 import { useSections } from '@/hooks/useSections';
 import { deleteStudent } from '@/services/api/students/deleteStudent';
 import { StudentForm } from '@/components/student/student form/StudentForm';
+import { StudentDeleteForm } from '@/components/student/student delete form/StudentDeleteForm';
 
 interface StudentListProps {
     showBreadcrumb?: boolean;
@@ -36,6 +37,8 @@ export const StudentList = ({
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSection, setSelectedSection] = useState<string>('');
     const [showFormDialog, setShowFormDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
     
     const { students, loading: studentsLoading, refreshStudents, setStudents } = useStudents({});
     const { classes, loading: classesLoading } = useClasses();
@@ -67,17 +70,21 @@ export const StudentList = ({
         });
     }, [students, selectedClass, selectedSection, searchTerm]);
 
-    const handleDelete = async (row: any) => {
-        if (!confirm(`🗑️ هل أنت متأكد من حذف ${row.full_name}؟`)) return;
-        
-        try {
-            const token = localStorage.getItem('token') || '';
-            await deleteStudent(row.id, token);
-            setStudents(prev => prev.filter(s => s.id !== row.id));
-            alert('✅ تم حذف الطالب بنجاح');
-        } catch (err: any) {
-            alert('❌ فشل الحذف: ' + err.message);
-        }
+    const openDeleteDialog = (student: any) => {
+        setSelectedStudent(student);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setSelectedStudent(null);
+    };
+
+    const handleDeleteSuccess = () => {
+        console.log('✅ [StudentList] Student deleted successfully!');
+        setShowDeleteDialog(false);
+        setSelectedStudent(null);
+        refreshStudents();
     };
 
     const columns: Column<any>[] = [
@@ -136,7 +143,7 @@ export const StudentList = ({
             label: 'حذف',
             icon: <Trash size={16} />,
             variant: 'danger',
-            onClick: handleDelete,
+            onClick: (row) => openDeleteDialog(row),
         },
     ];
 
@@ -145,102 +152,155 @@ export const StudentList = ({
 
     const isLoading = studentsLoading || classesLoading || sectionsLoading;
 
-    
     const openFormDialog = () => {
         console.log('➕ [StudentList] Opening form dialog');
         setShowFormDialog(true);
     };
 
-    
     const closeFormDialog = () => {
         console.log('🔴 [StudentList] Closing form dialog');
         setShowFormDialog(false);
     };
 
-    
     const handleFormSuccess = () => {
         console.log('✅ [StudentList] Student added successfully!');
         setShowFormDialog(false);
-        window.location.reload();
+        refreshStudents();
     };
 
     return (
         <div className="w-full min-h-screen bg-gray-50">
-            
+            {showFormDialog && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999999,
+                        padding: '20px',
+                    }}
+                    onClick={closeFormDialog}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '30px',
+                            maxWidth: '600px',
+                            width: '100%',
+                            maxHeight: 'auto',
+                            overflow: 'visible',
+                            position: 'relative',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={closeFormDialog}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                left: '20px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#999',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
 
-{showFormDialog && (
-    <div
-        style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999999,
-            padding: '20px',
-        }}
-        onClick={closeFormDialog}
-    >
-        <div
-            style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '30px',
-                maxWidth: '600px',  
-                width: '100%',
-                maxHeight: 'auto',  
-                overflow: 'visible',  
-                position: 'relative',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-        >
-            
-            <button
-                onClick={closeFormDialog}
-                style={{
-                    position: 'absolute',
-                    top: '15px',
-                    left: '20px',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    zIndex: 10,
-                }}
-            >
-                ✕
-            </button>
+                        <h2 style={{ 
+                            fontSize: '22px', 
+                            fontWeight: 'bold',
+                            marginBottom: '24px',
+                            color: '#1a1a1a',
+                            textAlign: 'right',
+                        }}>
+                            إضافة طالب
+                        </h2>
 
-            <h2 style={{ 
-                fontSize: '22px', 
-                fontWeight: 'bold',
-                marginBottom: '24px',
-                color: '#1a1a1a',
-                textAlign: 'right',
-            }}>
-                إضافة طالب
-            </h2>
+                        <div style={{
+                            overflow: 'visible',
+                        }}>
+                            <StudentForm
+                                mode="create"
+                                onSuccess={handleFormSuccess}
+                                onCancel={closeFormDialog}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            <div style={{
-                overflow: 'visible',  
-            }}>
-                <StudentForm
-                    mode="create"
-                    onSuccess={handleFormSuccess}
-                    onCancel={closeFormDialog}
-                />
-            </div>
-        </div>
-    </div>
-)}
+            {showDeleteDialog && selectedStudent && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999999,
+                        padding: '20px',
+                    }}
+                    onClick={closeDeleteDialog}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '30px',
+                            maxWidth: '512px',
+                            width: '100%',
+                            maxHeight: 'auto',
+                            overflow: 'visible',
+                            position: 'relative',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={closeDeleteDialog}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                left: '20px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#999',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
 
-            
+                        <StudentDeleteForm
+                            student={{
+                                id: selectedStudent.id,
+                                full_name: selectedStudent.full_name,
+                            }}
+                            onSuccess={handleDeleteSuccess}
+                            onCancel={closeDeleteDialog}
+                        />
+                    </div>
+                </div>
+            )}
+
             {showBreadcrumb && (
                 <div className="relative">
                     <Breadcrumb
@@ -249,7 +309,6 @@ export const StudentList = ({
                         showBackButton={showBackButton}
                         onBack={onBack}
                     />
-                    
                     <div className="absolute left-6 top-1/2 -translate-y-1/2">
                         <Button
                             variant="primary"
@@ -265,7 +324,6 @@ export const StudentList = ({
             )}
 
             <div className="px-6 py-6">
-                
                 <div className="flex items-center gap-3 mb-6 flex-wrap bg-white p-4 rounded-xl shadow-sm">
                     <div className="relative w-56">
                         <input
@@ -337,7 +395,6 @@ export const StudentList = ({
                     </div>
                 </div>
 
-                            
                 <div className="w-full" style={{ minHeight: '500px' }}>
                     <Table
                         columns={columns}
