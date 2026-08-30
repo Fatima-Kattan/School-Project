@@ -13,6 +13,7 @@ import { useClasses } from '@/hooks/useClass';
 import { useSections } from '@/hooks/useSections';
 import { deleteStudent } from '@/services/api/students/deleteStudent';
 import { StudentForm } from '@/components/student/student form/StudentForm';
+import { StudentEditForm } from '@/components/student/student edit form/StudentEditForm';
 import { StudentDeleteForm } from '@/components/student/student delete form/StudentDeleteForm';
 
 interface StudentListProps {
@@ -37,6 +38,7 @@ export const StudentList = ({
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSection, setSelectedSection] = useState<string>('');
     const [showFormDialog, setShowFormDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
     
@@ -69,6 +71,51 @@ export const StudentList = ({
             return match;
         });
     }, [students, selectedClass, selectedSection, searchTerm]);
+
+    const getStudentDetails = async (studentId: number) => {
+        try {
+            const token = localStorage.getItem('token') || '';
+            const response = await fetch(`http://localhost:8000/api/dashboard/students/${studentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+            });
+            const result = await response.json();
+            if (result.success && result.data) {
+                return result.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching student details:', error);
+            return null;
+        }
+    };
+
+    const openEditDialog = async (student: any) => {
+        console.log('📝 [StudentList] Opening edit for student:', student);
+        
+        const fullStudentData = await getStudentDetails(student.id);
+        if (fullStudentData) {
+            console.log('📝 [StudentList] Full student data from API:', fullStudentData);
+            setSelectedStudent(fullStudentData);
+        } else {
+            setSelectedStudent(student);
+        }
+        setShowEditDialog(true);
+    };
+
+    const closeEditDialog = () => {
+        setShowEditDialog(false);
+        setSelectedStudent(null);
+    };
+
+    const handleEditSuccess = () => {
+        console.log('✅ [StudentList] Student updated successfully!');
+        setShowEditDialog(false);
+        setSelectedStudent(null);
+        refreshStudents();
+    };
 
     const openDeleteDialog = (student: any) => {
         setSelectedStudent(student);
@@ -137,7 +184,7 @@ export const StudentList = ({
             label: 'تعديل',
             icon: <Edit size={16} />,
             variant: 'warning',
-            onClick: (row) => router.push(`/students/${row.id}/edit`),
+            onClick: (row) => openEditDialog(row),
         },
         {
             label: 'حذف',
@@ -235,6 +282,77 @@ export const StudentList = ({
                                 mode="create"
                                 onSuccess={handleFormSuccess}
                                 onCancel={closeFormDialog}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showEditDialog && selectedStudent && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999999,
+                        padding: '20px',
+                    }}
+                    onClick={closeEditDialog}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '30px',
+                            maxWidth: '600px',
+                            width: '100%',
+                            maxHeight: 'auto',
+                            overflow: 'visible',
+                            position: 'relative',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={closeEditDialog}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                left: '20px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#999',
+                                zIndex: 10,
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <h2 style={{ 
+                            fontSize: '22px', 
+                            fontWeight: 'bold',
+                            marginBottom: '24px',
+                            color: '#1a1a1a',
+                            textAlign: 'right',
+                        }}>
+                            تعديل طالب
+                        </h2>
+
+                        <div style={{
+                            overflow: 'visible',
+                        }}>
+                            <StudentEditForm
+                                student={selectedStudent}
+                                onSuccess={handleEditSuccess}
+                                onCancel={closeEditDialog}
                             />
                         </div>
                     </div>
