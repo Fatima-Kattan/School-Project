@@ -2,57 +2,48 @@
 
 'use client';
 
-import type { Student as StudentType } from '@/services/api/students/getStudent';
-import { Users, Phone, User } from 'lucide-react';
-
 interface StudentParentInfoProps {
-    student: StudentType;
+    student: any;
 }
 
 export const StudentParentInfo = ({ student }: StudentParentInfoProps) => {
-    const parent = student.parent;
-    const hasParentInfo = parent && (parent.father_name || parent.mother_name || 
-                            parent.father_phone || parent.mother_phone);
-
-    if (!hasParentInfo) {
-        return null;
-    }
-
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
-                <Users size={20} className="text-green-500" />
+        <div className="bg-white rounded-[12px] border border-gray-200 p-6">
+            <h3 
+                className="text-[16px] font-bold mb-4"
+                style={{
+                    fontFamily: 'Cairo',
+                    fontWeight: 700,
+                    fontSize: '16px',
+                    lineHeight: '28px',
+                    color: '#47524F',
+                }}
+            >
                 معلومات الأهل
-            </h2>
+            </h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                    <p className="text-sm text-gray-500">اسم الأب</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <User size={14} className="text-gray-400" />
-                        {parent?.father_name || '-'}
-                    </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-500" style={{ fontFamily: 'Cairo' }}>الأب</h4>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm" style={{ fontFamily: 'Cairo' }}>الاسم</span>
+                        <span className="font-medium text-[#000F0B]" style={{ fontFamily: 'Cairo' }}>{student.parent?.father_name || student.father_name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm" style={{ fontFamily: 'Cairo' }}>رقم الهاتف</span>
+                        <span className="font-medium text-[#000F0B]" style={{ fontFamily: 'Cairo' }}>{student.parent?.father_phone || student.father_phone || '-'}</span>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">اسم الأم</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <User size={14} className="text-gray-400" />
-                        {parent?.mother_name || '-'}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">هاتف الأب</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Phone size={14} className="text-gray-400" />
-                        {parent?.father_phone || '-'}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">هاتف الأم</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Phone size={14} className="text-gray-400" />
-                        {parent?.mother_phone || '-'}
-                    </p>
+                <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-500" style={{ fontFamily: 'Cairo' }}>الأم</h4>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm" style={{ fontFamily: 'Cairo' }}>الاسم</span>
+                        <span className="font-medium text-[#000F0B]" style={{ fontFamily: 'Cairo' }}>{student.parent?.mother_name || student.mother_name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm" style={{ fontFamily: 'Cairo' }}>رقم الهاتف</span>
+                        <span className="font-medium text-[#000F0B]" style={{ fontFamily: 'Cairo' }}>{student.parent?.mother_phone || student.mother_phone || '-'}</span>
+                    </div>
                 </div>
             </div>
         </div>
