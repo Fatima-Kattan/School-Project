@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
     Users,
     UserCircle,
@@ -18,6 +18,8 @@ import {
     PanelLeftClose
 } from 'lucide-react';
 import Image from 'next/image';
+import { LogoutMessage } from '@/components/auth/logout/logoutMessage';
+import { logoutAPI } from '@/services/api/auth/logout';
 
 interface NavItem {
     label: string;
@@ -27,7 +29,10 @@ interface NavItem {
 
 export const Sidebar = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(true);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // دالة مساعدة لإرسال الحالة إلى الـ Layout
     const notifyLayout = (open: boolean) => {
@@ -71,6 +76,25 @@ export const Sidebar = () => {
         },
     ];
 
+    // دالة معالجة تسجيل الخروج
+    const handleLogout = async () => {
+        setIsLoading(true);
+        try {
+            await logoutAPI();
+            // بعد نجاح تسجيل الخروج، سيتم إعادة التوجيه تلقائياً من الـ API
+            // ولكن نضيف توجيه احتياطي
+            router.push('/login');
+            router.refresh();
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // حتى في حالة الخطأ، نعيد التوجيه
+            router.push('/login');
+        } finally {
+            setIsLoading(false);
+            setShowLogoutModal(false);
+        }
+    };
+
     const renderNavItem = (item: NavItem) => {
         const active = isActive(item.href);
 
@@ -105,7 +129,7 @@ export const Sidebar = () => {
                         if (btn) {
                             btn.style.transform = 'translateX(0px)';
                             btn.style.opacity = '1';
-                            btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.2)'; // ظل قوي
+                            btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.2)';
                         }
                     }}
                     onMouseLeave={() => {
@@ -113,7 +137,7 @@ export const Sidebar = () => {
                         if (btn) {
                             btn.style.transform = 'translateX(calc(100% - 16px))';
                             btn.style.opacity = '0.4';
-                            btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.25)'; // ظل قوي
+                            btn.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.35), -4px 0 20px rgba(0, 0, 0, 0.25)';
                         }
                     }}
                     id="sidebar-toggle-btn"
@@ -154,7 +178,7 @@ export const Sidebar = () => {
                         <button
                             onClick={() => {
                                 setIsOpen(false);
-                                notifyLayout(false); // <- أضف هذا السطر
+                                notifyLayout(false);
                             }}
                             className="mr-auto w-11 h-11 bg-[#F7F7F7] rounded-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200"
                             aria-label="إغلاق القائمة"
@@ -167,10 +191,11 @@ export const Sidebar = () => {
                         {navItems.map(item => renderNavItem(item))}
                     </nav>
 
+                    {/* زر تسجيل الخروج المعدل */}
                     <div className="border-t border-[#e0e0e0] p-4 flex-shrink-0">
                         <button
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm text-content-critical hover:bg-red-50 transition-all duration-200"
-                            onClick={() => console.log('تسجيل الخروج')}
+                            onClick={() => setShowLogoutModal(true)}
                         >
                             <LogOut size={20} className="text-content-critical" />
                             <span>تسجيل الخروج</span>
@@ -178,6 +203,14 @@ export const Sidebar = () => {
                     </div>
                 </div>
             </aside>
+
+            {/* نافذة تأكيد تسجيل الخروج */}
+            <LogoutMessage
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={handleLogout}
+                isLoading={isLoading}
+            />
         </>
     );
 };

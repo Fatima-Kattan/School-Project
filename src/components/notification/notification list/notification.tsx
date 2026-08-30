@@ -32,7 +32,7 @@ function NotificationPage() {
     const getToken = (): string => {
         try {
             const token = localStorage.getItem('auth_token');
-            
+
             if (token && token.length > 10) {
                 console.log('✅ Token found:', token.substring(0, 20) + '...');
                 return token;
@@ -308,10 +308,6 @@ function NotificationPage() {
                                             <span className="flex items-center gap-1.5 text-[#007353]">
                                                 <User size={14} className="text-[#007353]" />
                                                 بواسطة الادارة العامة
-                                            </span>
-                                            <span className="flex items-center gap-1.5">
-                                                <Users size={14} className="text-gray-400" />
-                                                جميع المستخدمين
                                             </span>
                                             <span className="flex items-center gap-1.5">
                                                 <Calendar size={14} className="text-gray-400" />
