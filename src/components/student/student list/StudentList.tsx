@@ -12,6 +12,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useClasses } from '@/hooks/useClass';
 import { useSections } from '@/hooks/useSections';
 import { deleteStudent } from '@/services/api/students/deleteStudent';
+import { StudentForm } from '@/components/student/student form/StudentForm';
 
 interface StudentListProps {
     showBreadcrumb?: boolean;
@@ -19,6 +20,7 @@ interface StudentListProps {
     breadcrumbItems?: Array<{ label: string; href?: string }>;
     showBackButton?: boolean;
     onBack?: () => void;
+    onAddClick?: () => void;
 }
 
 export const StudentList = ({ 
@@ -27,88 +29,44 @@ export const StudentList = ({
     breadcrumbItems,
     showBackButton = true,
     onBack,
+    onAddClick,
 }: StudentListProps) => {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [selectedSection, setSelectedSection] = useState<string>('');
+    const [showFormDialog, setShowFormDialog] = useState(false);
     
-    // جلب البيانات
     const { students, loading: studentsLoading, refreshStudents, setStudents } = useStudents({});
     const { classes, loading: classesLoading } = useClasses();
-    const { sections, loading: sectionsLoading } = useSections({});
+    const { sections, loading: sectionsLoading } = useSections();
 
-    // عرض البيانات في Console للتأكد
     useEffect(() => {
         console.log('📚 Classes:', classes);
         console.log('📚 Sections:', sections);
-        console.log('📚 Selected Class:', selectedClass);
-        console.log('📚 Selected Section:', selectedSection);
-    }, [classes, sections, selectedClass, selectedSection]);
+    }, [classes, sections]);
 
-    // 🎯 تصفية الشعب حسب الصف المحدد
     const filteredSections = useMemo(() => {
-        console.log('🔄 Filtering sections...');
-        console.log('Selected Class:', selectedClass);
-        console.log('All Sections:', sections);
-        console.log('All Classes:', classes);
-        
-        // إذا لم يتم اختيار صف، نرجع مصفوفة فارغة
-        if (!selectedClass) {
-            console.log('⚠️ No class selected');
-            return [];
-        }
-
-        // البحث عن الكلاس المحدد
+        if (!selectedClass) return [];
         const selectedClassObj = classes.find(c => c.name === selectedClass);
-        console.log('Selected Class Object:', selectedClassObj);
-        
-        if (!selectedClassObj) {
-            console.log('⚠️ Class not found');
-            return [];
-        }
-
-        console.log('🔍 Looking for sections with class_id:', selectedClassObj.id);
-
-        // تصفية الشعب حسب class_id
-        const filtered = sections.filter(section => {
-            console.log(`Checking section: ${section.name}, class_id: ${section.class_id}, target: ${selectedClassObj.id}`);
-            return section.class_id === selectedClassObj.id;
-        });
-
-        console.log('✅ Filtered Sections:', filtered);
-        return filtered;
+        if (!selectedClassObj) return [];
+        return sections.filter(section => section.class_id === selectedClassObj.id);
     }, [selectedClass, classes, sections]);
 
-    // 🎯 تصفية الطلاب
     const filteredStudents = useMemo(() => {
         return students.filter((student) => {
             let match = true;
-            
-            // فلترة حسب الصف
-            if (selectedClass && student.class_name !== selectedClass) {
-                match = false;
-            }
-            
-            // فلترة حسب الشعبة
-            if (selectedSection && student.section_name !== selectedSection) {
-                match = false;
-            }
-            
-            // فلترة حسب البحث
+            if (selectedClass && student.class_name !== selectedClass) match = false;
+            if (selectedSection && student.section_name !== selectedSection) match = false;
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
                 const fullName = (student.full_name || '').toLowerCase();
-                if (!fullName.includes(term)) {
-                    match = false;
-                }
+                if (!fullName.includes(term)) match = false;
             }
-            
             return match;
         });
     }, [students, selectedClass, selectedSection, searchTerm]);
 
-    // حذف الطالب
     const handleDelete = async (row: any) => {
         if (!confirm(`🗑️ هل أنت متأكد من حذف ${row.full_name}؟`)) return;
         
@@ -122,26 +80,10 @@ export const StudentList = ({
         }
     };
 
-    // أعمدة الجدول
     const columns: Column<any>[] = [
-        { 
-            key: 'id', 
-            header: 'الرقم', 
-            align: 'center', 
-            width: 60 
-        },
-        { 
-            key: 'full_name', 
-            header: 'الطالب', 
-            align: 'center', 
-            width: 130 
-        },
-        { 
-            key: 'gender', 
-            header: 'الجنس', 
-            align: 'center', 
-            width: 70 
-        },
+        { key: 'id', header: 'الرقم', align: 'center', width: 60 },
+        { key: 'full_name', header: 'الطالب', align: 'center', width: 130 },
+        { key: 'gender', header: 'الجنس', align: 'center', width: 70 },
         {
             key: 'class_section',
             header: 'الصف / الشعبة',
@@ -166,18 +108,8 @@ export const StudentList = ({
                 </div>
             )
         },
-        { 
-            key: 'birth_date', 
-            header: 'تاريخ الميلاد', 
-            align: 'center', 
-            width: 110 
-        },
-        { 
-            key: 'residential_address', 
-            header: 'عنوان السكن', 
-            align: 'center', 
-            width: 150 
-        },
+        { key: 'birth_date', header: 'تاريخ الميلاد', align: 'center', width: 110 },
+        { key: 'residential_address', header: 'عنوان السكن', align: 'center', width: 150 },
         {
             key: 'comment',
             header: 'الملاحظات',
@@ -187,7 +119,6 @@ export const StudentList = ({
         },
     ];
 
-    // أزرار الجدول
     const actions: TableAction<any>[] = [
         {
             label: 'عرض',
@@ -209,46 +140,137 @@ export const StudentList = ({
         },
     ];
 
-    // Breadcrumb
     const defaultBreadcrumbItems = [{ label: title }];
     const items = breadcrumbItems || defaultBreadcrumbItems;
 
-    // زر الإضافة
-    const addButton = (
-        <Button
-            variant="primary"
-            onClick={() => router.push('/students/create')}
-            leftIcon={<Plus size={16} />}
-            size="md"
-            className="px-5 py-2.5"
-        >
-            إضافة طالب
-        </Button>
-    );
-
-    // حالة التحميل
     const isLoading = studentsLoading || classesLoading || sectionsLoading;
+
+    
+    const openFormDialog = () => {
+        console.log('➕ [StudentList] Opening form dialog');
+        setShowFormDialog(true);
+    };
+
+    
+    const closeFormDialog = () => {
+        console.log('🔴 [StudentList] Closing form dialog');
+        setShowFormDialog(false);
+    };
+
+    
+    const handleFormSuccess = () => {
+        console.log('✅ [StudentList] Student added successfully!');
+        setShowFormDialog(false);
+        window.location.reload();
+    };
 
     return (
         <div className="w-full min-h-screen bg-gray-50">
-            {showBreadcrumb && (
-                <Breadcrumb
-                    items={items}
-                    className="mb-0"
-                    showBackButton={showBackButton}
-                    onBack={onBack}
-                    actionButton={addButton}
+            
+
+{showFormDialog && (
+    <div
+        style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999999,
+            padding: '20px',
+        }}
+        onClick={closeFormDialog}
+    >
+        <div
+            style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '30px',
+                maxWidth: '600px',  
+                width: '100%',
+                maxHeight: 'auto',  
+                overflow: 'visible',  
+                position: 'relative',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+        >
+            
+            <button
+                onClick={closeFormDialog}
+                style={{
+                    position: 'absolute',
+                    top: '15px',
+                    left: '20px',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#999',
+                    zIndex: 10,
+                }}
+            >
+                ✕
+            </button>
+
+            <h2 style={{ 
+                fontSize: '22px', 
+                fontWeight: 'bold',
+                marginBottom: '24px',
+                color: '#1a1a1a',
+                textAlign: 'right',
+            }}>
+                إضافة طالب
+            </h2>
+
+            <div style={{
+                overflow: 'visible',  
+            }}>
+                <StudentForm
+                    mode="create"
+                    onSuccess={handleFormSuccess}
+                    onCancel={closeFormDialog}
                 />
+            </div>
+        </div>
+    </div>
+)}
+
+            
+            {showBreadcrumb && (
+                <div className="relative">
+                    <Breadcrumb
+                        items={items}
+                        className="mb-0"
+                        showBackButton={showBackButton}
+                        onBack={onBack}
+                    />
+                    
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2">
+                        <Button
+                            variant="primary"
+                            onClick={openFormDialog}
+                            leftIcon={<Plus size={16} />}
+                            size="md"
+                            className="px-5 py-2.5 shadow-sm"
+                        >
+                            إضافة طالب
+                        </Button>
+                    </div>
+                </div>
             )}
 
             <div className="px-6 py-6">
-                {/* الفلاتر */}
+                
                 <div className="flex items-center gap-3 mb-6 flex-wrap bg-white p-4 rounded-xl shadow-sm">
-                    {/* بحث */}
                     <div className="relative w-56">
                         <input
                             type="text"
-                            placeholder="بحث عن طالب..."
+                            placeholder="بحث  ..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pr-9 pl-3 py-1.5 border border-gray-300 rounded-[12px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
@@ -256,23 +278,20 @@ export const StudentList = ({
                         <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     </div>
 
-                    {/* زر الفلتر */}
                     <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
                         <Filter size={20} />
                     </button>
 
                     <div className="w-px h-6 bg-gray-300"></div>
 
-                    {/* Select الصف */}
                     <div className="relative">
                         <select
                             value={selectedClass}
                             onChange={(e) => {
-                                console.log('🔵 Class selected:', e.target.value);
                                 setSelectedClass(e.target.value);
                                 setSelectedSection('');
                             }}
-                            className="px-3 py-1.5 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[120px]"
+                            className="px-3 py-1.5 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[120px]"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
@@ -280,7 +299,7 @@ export const StudentList = ({
                                 backgroundSize: '14px',
                             }}
                         >
-                            <option value="">جميع الصفوف</option>
+                            <option value=""> الصف</option>
                             {classes.map((c) => (
                                 <option key={c.id} value={c.name}>
                                     {c.name}
@@ -289,15 +308,11 @@ export const StudentList = ({
                         </select>
                     </div>
 
-                    {/* Select الشعبة */}
                     <div className="relative">
                         <select
                             value={selectedSection}
-                            onChange={(e) => {
-                                console.log('🟢 Section selected:', e.target.value);
-                                setSelectedSection(e.target.value);
-                            }}
-                            className="px-3 py-1.5 pr-7 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[120px]"
+                            onChange={(e) => setSelectedSection(e.target.value)}
+                            className="px-3 py-1.5 border border-gray-300 rounded-[12px] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[100px]"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
@@ -306,7 +321,7 @@ export const StudentList = ({
                             }}
                             disabled={!selectedClass || filteredSections.length === 0}
                         >
-                            <option value="">جميع الشعب</option>
+                            <option value="">الشعبة</option>
                             {filteredSections.length > 0 ? (
                                 filteredSections.map((s) => (
                                     <option key={s.id} value={s.name}>
@@ -320,14 +335,9 @@ export const StudentList = ({
                             )}
                         </select>
                     </div>
-
-                    {/* عرض عدد النتائج */}
-                    <div className="text-sm text-gray-500 mr-2">
-                        {filteredStudents.length} طالب
-                    </div>
                 </div>
 
-                {/* 🔥 الجدول مع ارتفاع ثابت */}
+                            
                 <div className="w-full" style={{ minHeight: '500px' }}>
                     <Table
                         columns={columns}
@@ -339,7 +349,7 @@ export const StudentList = ({
                         emptyTitle="لا يوجد طلاب"
                         emptyDescription={selectedClass ? 'لا يوجد طلاب في هذا الصف' : 'قم بإضافة طالب جديد'}
                         emptyButtonText="إضافة طالب"
-                        onEmptyButtonClick={() => router.push('/students/create')}
+                        onEmptyButtonClick={openFormDialog}
                         headerBgColor="#F9FCFB"
                         rowBgColor="#FFFFFF"
                         borderColor="#E0E0E0"
