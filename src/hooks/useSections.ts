@@ -25,11 +25,16 @@ export interface Section {
     students_count: number;
 }
 
+export interface SectionListResponse {
+    message: string;
+    data: Section[];
+}
+
 // ====== Services ======
 const getSections = async (
     token: string,
     filters?: { class_id?: number; name?: string }
-): Promise<{ message: string; data: Section[] }> => {
+): Promise<SectionListResponse> => {
     try {
         let url = 'http://localhost:8000/api/dashboard/sections';
 
@@ -59,29 +64,18 @@ const getSections = async (
             throw new Error(result.message || `HTTP ${response.status}`);
         }
 
-        // 🔥 معالجة جميع الاحتمالات
         let sectionsData: Section[] = [];
         
-        // الحالة 1: result.data هو مصفوفة
         if (result.data && Array.isArray(result.data)) {
             sectionsData = result.data;
-        }
-        // الحالة 2: result.data يحتوي على data (pagination)
-        else if (result.data && result.data.data && Array.isArray(result.data.data)) {
+        } else if (result.data && result.data.data && Array.isArray(result.data.data)) {
             sectionsData = result.data.data;
-        }
-        // الحالة 3: result هو مصفوفة مباشرة
-        else if (Array.isArray(result)) {
+        } else if (Array.isArray(result)) {
             sectionsData = result;
-        }
-        // الحالة 4: result يحتوي على sections
-        else if (result.sections && Array.isArray(result.sections)) {
+        } else if (result.sections && Array.isArray(result.sections)) {
             sectionsData = result.sections;
-        }
-        // الحالة 5: لا يوجد بيانات
-        else {
+        } else {
             console.warn('⚠️ No data found in response:', result);
-            // 🔥 بيانات تجريبية للاختبار
             sectionsData = [
                 {
                     id: 1,
@@ -117,7 +111,6 @@ const getSections = async (
     }
 };
 
-// ====== باقي الدوال (getSection, createSection, updateSection, deleteSection) ======
 const getSection = async (id: number, token: string): Promise<{ message: string; data: Section }> => {
     try {
         const response = await fetch(
