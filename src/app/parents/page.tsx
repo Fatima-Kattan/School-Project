@@ -1,240 +1,228 @@
-// src/app/dashboard/parents/page.tsx
+// app/dashboard/parents/page.tsx
 
 'use client';
-
-import { useState, useEffect } from 'react';
-import { useParents } from '@/hooks/useParents';
-import { getParentColumns, getParentTableActions } from './columns';
-import { Table } from '@/components/shared/table/table';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { parentService, Parent } from '@/services/api/parents/parentService';
+import {
+    Plus,
+    Loader2,
+    Check,
+    Copy
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/shared/button/button';
-import { Dialog } from '@/components/shared/dialog/dialog';
-import { Plus, Search, Users } from 'lucide-react';
-import { Parent } from '@/services/api/parents/parentService';
+import ParentCard from '@/components/parent/ParentCard'; // استيراد المكون الجديد
+
+// أنواع البيانات للابن
+interface Child {
+    id: number;
+    student_name: string;
+    class_name: string;
+}
+
+// ====== الحصول على التوكن ======
+const getToken = () => {
+    return localStorage.getItem('token') || '';
+};
 
 export default function ParentsPage() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter(); // ✅ تم وضع الـ Router هنا بشكل صحيح
+    const [parents, setParents] = useState<Parent[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [expandedParentId, setExpandedParentId] = useState<number | null>(null);
+    const [childrenData, setChildrenData] = useState<Record<number, Child[]>>({});
+    const [childrenLoading, setChildrenLoading] = useState<Record<number, boolean>>({});
+    const [copiedField, setCopiedField] = useState<string | null>(null);
 
-    const {
-        parents,
-        loading,
-        error,
-        refreshParents,
-        searchParents,
-        deleteParent,
-        createParent,
-        updateParent,
-    } = useParents();
+    const token = getToken();
 
-    // تحميل البيانات عند أول تحميل
+    // ====== جلب أولياء الأمور ======
+    const fetchParents = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await parentService.getAll(token);
+            if (response.data) {
+                setParents(response.data);
+            }
+        } catch (error: any) {
+            console.error('Error fetching parents:', error);
+            toast.error(error.message || 'حدث خطأ أثناء جلب البيانات');
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
     useEffect(() => {
-        refreshParents();
-    }, []);
+        fetchParents();
+    }, [fetchParents]);
 
-    // معالج البحث
-    const handleSearch = async () => {
-        if (searchTerm.trim()) {
-            await searchParents(searchTerm);
-        } else {
-            await refreshParents();
+    // ====== توسيع الصف لجلب الأبناء ======
+    const toggleExpand = async (parentId: number) => {
+        if (expandedParentId === parentId) {
+            setExpandedParentId(null);
+            return;
         }
-    };
 
-    // معالج إضافة ولي أمر
-    const handleAddParent = async (data: any) => {
-        setIsLoading(true);
+        setExpandedParentId(parentId);
+        setChildrenLoading(prev => ({ ...prev, [parentId]: true }));
+
         try {
-            await createParent(data);
-            setIsAddModalOpen(false);
-            await refreshParents();
-        } catch (error) {
-            console.error('Error adding parent:', error);
+            const response = await parentService.getChildren(parentId, token);
+            let fetchedChildren: Child[] = [];
+
+            if (response && response.data) {
+                if (Array.isArray(response.data)) {
+                    fetchedChildren = response.data;
+                } else if (typeof response.data === 'object') {
+                    if (Array.isArray(response.data.children)) {
+                        fetchedChildren = response.data.children;
+                    } else if (Array.isArray(response.data.students)) {
+                        fetchedChildren = response.data.students;
+                    } else if (response.data.id) {
+                        fetchedChildren = [response.data];
+                    }
+                }
+            }
+
+            const normalizedChildren = fetchedChildren.map((child: any) => ({
+                id: child.id,
+                student_name: child.student_name || child.name || child.full_name || 'طالب',
+                class_name: child.class_name || child.grade || child.classroom || child.section || 'بدون صف'
+            }));
+
+            setChildrenData(prev => ({ ...prev, [parentId]: normalizedChildren }));
+
+            if (normalizedChildren.length === 0) {
+                console.warn(`لا يوجد أبناء مرسلين من السيرفر لولي الأمر رقم ${parentId}. تأكد من الـ API.`);
+            }
+
+        } catch (error: any) {
+            console.error('Error fetching children:', error);
+            setChildrenData(prev => ({ ...prev, [parentId]: [] }));
         } finally {
-            setIsLoading(false);
+            setChildrenLoading(prev => ({ ...prev, [parentId]: false }));
         }
     };
 
-    // معالج تعديل ولي أمر
-    const handleEditParent = async (data: any) => {
-        if (!selectedParent) return;
-        setIsLoading(true);
-        try {
-            await updateParent(selectedParent.id, data);
-            setIsEditModalOpen(false);
-            setSelectedParent(null);
-            await refreshParents();
-        } catch (error) {
-            console.error('Error updating parent:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // ====== حذف ولي الأمر ======
+    const handleDelete = async (parent: Parent) => {
+        if (!confirm(`هل أنت متأكد من حذف ولي الأمر "${parent.full_name_father}"؟`)) return;
 
-    // معالج حذف ولي أمر
-    const handleDeleteParent = async () => {
-        if (!selectedParent) return;
-        setIsLoading(true);
         try {
-            await deleteParent(selectedParent.id);
-            setIsDeleteDialogOpen(false);
-            setSelectedParent(null);
-            await refreshParents();
-        } catch (error) {
+            await parentService.delete(parent.id, token);
+            toast.success('تم الحذف بنجاح');
+            fetchParents();
+        } catch (error: any) {
             console.error('Error deleting parent:', error);
-        } finally {
-            setIsLoading(false);
+            toast.error(error.message || 'حدث خطأ أثناء الحذف');
         }
     };
 
-    // تعريف أعمدة الجدول مع الأكشنز
-    const columns = getParentColumns({
-        onView: (parent) => {
-            // عرض تفاصيل ولي الأمر
-            console.log('View parent:', parent);
-        },
-        onEdit: (parent) => {
-            setSelectedParent(parent);
-            setIsEditModalOpen(true);
-        },
-        onDelete: (parent) => {
-            setSelectedParent(parent);
-            setIsDeleteDialogOpen(true);
-        },
-        onViewChildren: (parent) => {
-            // عرض أبناء ولي الأمر
-            console.log('View children:', parent);
-        },
-    });
+    // ====== دالة النسخ العامة ======
+         // ====== دالة النسخ العامة ======
+    const handleCopy = (e: React.MouseEvent, parentId: number, field: string, text: string) => {
+        e.preventDefault(); 
+        e.stopPropagation(); // ✅ هذه تمنع فتح الأبناء نهائياً
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedField(`${parentId}-${field}`); // ✅ ربط الحالة بالمعرّف والحقل
+            toast.success('تم النسخ بنجاح!');
+            setTimeout(() => setCopiedField(null), 2000);
+        }).catch(() => {
+            toast.error('تعذر النسخ');
+        });
+    };
 
-    const actions = getParentTableActions({
-        onView: (parent) => {
-            console.log('View parent:', parent);
-        },
-        onEdit: (parent) => {
-            setSelectedParent(parent);
-            setIsEditModalOpen(true);
-        },
-        onDelete: (parent) => {
-            setSelectedParent(parent);
-            setIsDeleteDialogOpen(true);
-        },
-        onViewChildren: (parent) => {
-            console.log('View children:', parent);
-        },
-    });
+
+    // ====== دالة عرض أيقونة النسخ ======
+        const renderCopyIcon = (parentId: number, field: string, size: number, color: string, value: string) => {
+        if (copiedField === `${parentId}-${field}`) {
+            return <Check size={size} className="text-green-600" />;
+        }
+        return (
+            <Copy
+                size={size}
+                className={`${color} cursor-pointer hover:opacity-70`}
+                onClick={(e) => handleCopy(e, parentId, field, value)}
+            />
+        );
+    };
 
     return (
-        <div className="p-6" dir="rtl">
-            {/* العنوان والأزرار */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">أولياء الأمور</h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        إدارة أولياء الأمور وتنظيم بياناتهم
-                    </p>
-                </div>
+        <div className="min-h-screen bg-[#f4f6f9] p-6" dir="rtl">
+            {/* الهيدر العلوي */}
+            <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <h1 className="text-xl font-bold text-gray-800">أولياء الأمور</h1>
+
+                {/* ✅ تم إصلاح الـ Router هنا */}
                 <Button
                     variant="primary"
-                    onClick={() => setIsAddModalOpen(true)}
-                    leftIcon={<Plus size={18} />}
+                    onClick={() => router.push('/parents/create')} 
+                    leftIcon={<Plus size={16} />}
+                    size="md"
+                    className="px-5 py-2.5"
                 >
                     إضافة ولي أمر
                 </Button>
             </div>
 
-            {/* شريط البحث */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className="flex-1 relative">
-                    <input
-                        type="text"
-                        placeholder="ابحث عن ولي أمر بالاسم أو رقم الهاتف..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#007353]/20 focus:border-[#007353] transition-all"
-                    />
-                    <Search
-                        size={18}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                </div>
-                <Button
-                    variant="primary"
-                    onClick={handleSearch}
-                    size="sm"
-                    className="min-w-[80px]"
-                >
-                    بحث
-                </Button>
-                {searchTerm && (
-                    <Button
-                        variant="ghost-outline"
-                        onClick={() => {
-                            setSearchTerm('');
-                            refreshParents();
-                        }}
-                        size="sm"
-                    >
-                        إلغاء
-                    </Button>
-                )}
-            </div>
-
             {/* الجدول */}
-            <Table
-                columns={columns}
-                data={parents}
-                keyExtractor={(row) => row.id}
-                actions={actions}
-                isLoading={loading}
-                emptyTitle="لا يوجد أولياء أمور"
-                emptyDescription="قم بإضافة أولياء الأمور وتنظيم البيانات من هنا"
-                emptyButtonText="إضافة ولي أمر"
-                onEmptyButtonClick={() => setIsAddModalOpen(true)}
-                emptyIcon={<Users size={32} className="text-gray-400" />}
-                striped
-                hoverable
-                compact={false}
-                headerBgColor="#F9FCFB"
-                borderColor="#E0E0E0"
-                radius={12}
-            />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-right border-collapse text-sm">
+                        <thead>
+                            <tr className="bg-[#f8f9fa] text-gray-600 font-bold border-b border-gray-200 text-xs">
+                                <th className="px-3 py-3">الأب</th>
+                                <th className="px-3 py-3">هاتف الأب</th>
+                                <th className="px-3 py-3">مهنة الأب</th>
+                                <th className="px-3 py-3">الأم</th>
+                                <th className="px-3 py-3">هاتف الأم</th>
+                                <th className="px-3 py-3">مهنة الأم</th>
+                                <th className="px-3 py-3">البريد الإلكتروني</th>
+                                <th className="px-3 py-3">اسم المستخدم</th>
+                                <th className="px-3 py-3">تاريخ التسجيل</th>
+                                <th className="px-3 py-3">الملاحظات</th>
+                                <th className="px-3 py-3">خيارات</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={11} className="text-center py-10">
+                                        <Loader2 className="animate-spin mx-auto text-gray-400" size={32} />
+                                    </td>
+                                </tr>
+                            ) : parents.length === 0 ? (
+                                <tr>
+                                    <td colSpan={11} className="text-center py-10 text-gray-500">
+                                        لا يوجد أولياء أمور
+                                    </td>
+                                </tr>
+                            ) : (
+                                parents.map((parent) => {
+                                    const isExpanded = expandedParentId === parent.id;
+                                    const children = childrenData[parent.id] || [];
+                                    const isChildrenLoading = childrenLoading[parent.id];
 
-            {/* إحصائيات سريعة */}
-            {!loading && parents.length > 0 && (
-                <div className="mt-4 text-sm text-gray-500">
-                    إجمالي أولياء الأمور: <span className="font-bold text-gray-700">{parents.length}</span>
+                                    return (
+                                        <ParentCard
+                                            key={parent.id}
+                                            parent={parent}
+                                            isExpanded={isExpanded}
+                                            children={children}
+                                            childrenLoading={isChildrenLoading}
+                                            onToggle={() => toggleExpand(parent.id)}
+                                            onDelete={() => handleDelete(parent)}
+                                            renderCopyIcon={renderCopyIcon}
+                                        />
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
-
-            {/* ديالوغ حذف ولي أمر */}
-            <Dialog
-                isOpen={isDeleteDialogOpen}
-                onClose={() => {
-                    setIsDeleteDialogOpen(false);
-                    setSelectedParent(null);
-                }}
-                onConfirm={handleDeleteParent}
-                title="حذف ولي أمر"
-                description={
-                    <>
-                        هل أنت متأكد من حذف ولي الأمر: <span className="text-red-600 font-bold">{selectedParent?.full_name_father}</span>
-                        {selectedParent?.full_name_mother && (
-                            <> و <span className="text-red-600 font-bold">{selectedParent?.full_name_mother}</span></>
-                        )}
-                    </>
-                }
-                confirmText="تأكيد الحذف"
-                cancelText="إلغاء"
-                confirmVariant="danger"
-                isLoading={isLoading}
-            />
-
-            {/* هنا راح نضيف المودالات حق الإضافة والتعديل لاحقاً */}
+            </div>
         </div>
     );
 }
