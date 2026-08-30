@@ -66,7 +66,7 @@ export const Sidebar = () => {
         },
         {
             label: 'الإعلانات',
-            href: '/announcements',
+            href: '/notifications',
             icon: <Megaphone size={20} />,
         },
     ];
