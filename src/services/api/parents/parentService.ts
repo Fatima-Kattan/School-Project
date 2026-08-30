@@ -17,11 +17,25 @@ export interface Parent {
     phone_number_mother: string;
     created_at: string;
     updated_at: string;
+    // إضافات من جدول المستخدم
+    user_id?: number;
+    decrypted_password?: string; // كلمة السر بعد فك التشفير
 }
+
+// ====== Helper: فك تشفير كلمة السر ======
+const decryptPassword = (encryptedPassword: string): string => {
+    try {
+        // إذا كانت كلمة السر مشفرة بـ Base64
+        return atob(encryptedPassword);
+    } catch {
+        // إذا كانت غير مشفرة ترجع كما هي
+        return encryptedPassword;
+    }
+};
 
 // ====== API Functions ======
 export const parentService = {
-    // GET: جلب كل أولياء الأمور
+    // GET: جلب كل أولياء الأمور مع فك تشفير كلمة السر
     getAll: async (token: string) => {
         const response = await fetch(`${API_BASE_URL}/parents`, {
             method: 'GET',
@@ -30,10 +44,28 @@ export const parentService = {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        return handleResponse(response);
+        const result = await handleResponse(response);
+        
+        // فك تشفير كلمة السر لكل ولي أمر
+        if (result.data && Array.isArray(result.data)) {
+            result.data = result.data.map((parent: any) => {
+                // إذا كان فيه user مع password مشفر
+                if (parent.user && parent.user.password) {
+                    return {
+                        ...parent,
+                        decrypted_password: decryptPassword(parent.user.password),
+                        user_name: parent.user.user_name || parent.user_name,
+                        email: parent.user.email || parent.email,
+                    };
+                }
+                return parent;
+            });
+        }
+        
+        return result;
     },
 
-    // GET: جلب ولي أمر واحد
+    // GET: جلب ولي أمر واحد مع فك تشفير كلمة السر
     getOne: async (id: number, token: string) => {
         const response = await fetch(`${API_BASE_URL}/parents/${id}`, {
             method: 'GET',
@@ -42,7 +74,16 @@ export const parentService = {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        return handleResponse(response);
+        const result = await handleResponse(response);
+        
+        // فك تشفير كلمة السر
+        if (result.data && result.data.user && result.data.user.password) {
+            result.data.decrypted_password = decryptPassword(result.data.user.password);
+            result.data.user_name = result.data.user.user_name || result.data.user_name;
+            result.data.email = result.data.user.email || result.data.email;
+        }
+        
+        return result;
     },
 
     // POST: إنشاء ولي أمر
@@ -94,7 +135,24 @@ export const parentService = {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        return handleResponse(response);
+        const result = await handleResponse(response);
+        
+        // فك تشفير كلمة السر للنتائج
+        if (result.data && Array.isArray(result.data)) {
+            result.data = result.data.map((parent: any) => {
+                if (parent.user && parent.user.password) {
+                    return {
+                        ...parent,
+                        decrypted_password: decryptPassword(parent.user.password),
+                        user_name: parent.user.user_name || parent.user_name,
+                        email: parent.user.email || parent.email,
+                    };
+                }
+                return parent;
+            });
+        }
+        
+        return result;
     },
 
     // GET: أبناء ولي الأمر
@@ -136,3 +194,6 @@ const handleResponse = async (response: Response) => {
     
     return result;
 };
+
+// ====== Export helper for external use ======
+export { decryptPassword };
