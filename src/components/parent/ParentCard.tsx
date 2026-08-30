@@ -165,7 +165,7 @@ export default function ParentCard({
                                     <Loader2 className="animate-spin text-[#2e7d32]" size={20} />
                                 </div>
                             ) : children.length === 0 ? (
-                                <p className="text-gray-500 pr-4 text-xs">لا يوجد أبناء مسجلين لهذا ولي الأمر أو حدث خطأ في الجلب.</p>
+                                <p className="text-gray-500 pr-4 text-xs">لا يوجد أبناء مسجلين لهذا ولي الأمر.</p>
                             ) : (
                                 <div className="flex flex-wrap gap-4">
                                     {children.map((child) => (

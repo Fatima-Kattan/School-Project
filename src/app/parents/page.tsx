@@ -3,25 +3,17 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
 import { parentService, Parent } from '@/services/api/parents/parentService';
 import {
     Plus,
     Loader2,
     Check,
-    Copy,
-    ChevronDown,
-    X,
-    User2,
-    LockKeyhole,
-    UserPen
+    Copy
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/shared/button/button';
-import { Dialog } from '@/components/shared/dialog/dialog';
-import { Input } from '@/components/shared/input/inpute';
 import ParentCard from '@/components/parent/ParentCard';
+import CreateParentDialog from '@/components/parent/CreateParentDialog'; // استيراد المكون الجديد
 
 // أنواع البيانات للابن
 interface Child {
@@ -40,25 +32,12 @@ export default function ParentsPage() {
     
     // ====== الحالات العامة ======
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [parents, setParents] = useState<Parent[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedParentId, setExpandedParentId] = useState<number | null>(null);
     const [childrenData, setChildrenData] = useState<Record<number, Child[]>>({});
     const [childrenLoading, setChildrenLoading] = useState<Record<number, boolean>>({});
     const [copiedField, setCopiedField] = useState<string | null>(null);
-
-    // ====== حالات نموذج الإضافة ======
-    const [fatherName, setFatherName] = useState('');
-    const [fatherJob, setFatherJob] = useState('');
-    const [fatherPhone, setFatherPhone] = useState('');
-    const [motherName, setMotherName] = useState('');
-    const [motherJob, setMotherJob] = useState('');
-    const [motherPhone, setMotherPhone] = useState('');
-    const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [notes, setNotes] = useState('');
 
     const token = getToken();
 
@@ -172,54 +151,6 @@ export default function ParentsPage() {
         );
     };
 
-    // ====== دالة إرسال النموذج الفعلية ======
-    const handleCreateParent = async () => {
-        // تحقق بسيط من الحقول المطلوبة
-        if (!fatherName || !fatherJob || !fatherPhone || !motherName || !motherJob || !motherPhone || !email || !username || !password) {
-            toast.error('يرجى تعبئة جميع الحقول المطلوبة');
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const dataToSend = {
-                full_name_father: fatherName,
-                job_father: fatherJob,
-                phone_number_father: `+${fatherPhone}`, // إضافة + للرمز
-                full_name_mother: motherName,
-                job_mother: motherJob,
-                phone_number_mother: `+${motherPhone}`,
-                email: email,
-                user_name: username,
-                password: password,
-                notes: notes,
-            };
-
-            await parentService.create(dataToSend, token);
-            toast.success('تم إضافة ولي الأمر بنجاح');
-            setIsDialogOpen(false);
-            
-            // تصفير الحقول
-            setFatherName('');
-            setFatherJob('');
-            setFatherPhone('');
-            setMotherName('');
-            setMotherJob('');
-            setMotherPhone('');
-            setEmail('');
-            setUsername('');
-            setPassword('');
-            setNotes('');
-            
-            fetchParents(); // إعادة تحميل الجدول
-        } catch (error: any) {
-            console.error('Error creating parent:', error);
-            toast.error(error.message || 'حدث خطأ أثناء إضافة ولي الأمر');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[#f4f6f9] p-6" dir="rtl">
             {/* الهيدر العلوي */}
@@ -294,218 +225,13 @@ export default function ParentsPage() {
                 </div>
             </div>
 
-            {/* ====== المنبثقة (Dialog) الخاصة بإضافة ولي أمر ====== */}
-            <Dialog
-                className='h-fit overflow-y-auto'
+            {/* ====== استدعاء المكون الجديد للديالوغ ====== */}
+            <CreateParentDialog 
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
-                title="إضافة أولياء أمر"
-                confirmText="تأكيد إضافة أولياء أمر"
-                cancelText="إلغاء"
-                confirmVariant="primary"
-                showCancel={true}
-                showConfirm={true}
-                maxWidth="2xl"
-                onConfirm={handleCreateParent}
-                isLoading={isSubmitting}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    {/* اسم الأب */}
-                    <Input
-                        className='h-[33px]'
-                        label="اسم الأب الكامل"
-                        required
-                        placeholder="مثال: محمد حسن"
-                        value={fatherName}
-                        onChange={(e) => setFatherName(e.target.value)}
-                    />
-
-                    {/* المهنة */}
-                    <Input
-                        className='h-[33px]'
-                        label="المهنة"
-                        required
-                        placeholder="مثال: مهندس"
-                        value={fatherJob}
-                        onChange={(e) => setFatherJob(e.target.value)}
-                    />
-
-                    {/* رقم الهاتف - PhoneInput مُهيأ بالكامل ليطابق الـ Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-[#000f0b] mb-1.5 after:content-['(مطلوب)'] after:text-red-500 after:mr-1">
-                            رقم الهاتف
-                        </label>
-                        <PhoneInput
-                            country={'iq'}
-                            value={fatherPhone}
-                            onChange={(phone) => setFatherPhone(phone)}
-                            inputStyle={{
-                                width: '100%',
-                                height: '33px',
-                                borderRadius: '8px',
-                                border: '1px solid #ACACAC',
-                                fontSize: '14px',
-                                fontFamily: 'Cairo, sans-serif',
-                                backgroundColor: '#fff',
-                                paddingLeft: '48px',
-                                textAlign: 'right',
-                                color: '#000f0b'
-                            }}
-                            buttonStyle={{
-                                border: 'none',
-                                background: 'transparent',
-                                borderLeft: '1px solid #e5e7eb',
-                                borderRadius: '0',
-                                height: '31px',
-                                padding: '0 10px',
-                                top: '1px',
-                                left: '1px',
-                            }}
-                            containerStyle={{
-                                direction: 'ltr',
-                                width: '100%'
-                            }}
-                            dropdownStyle={{
-                                textAlign: 'right',
-                                fontFamily: 'Cairo, sans-serif'
-                            }}
-                        />
-                    </div>
-
-                    {/* اسم الأم */}
-                    <Input
-                        className='h-[33px]'
-                        label="اسم الأم الكامل"
-                        required
-                        placeholder="مثال: فاطمة علي"
-                        value={motherName}
-                        onChange={(e) => setMotherName(e.target.value)}
-                    />
-
-                    {/* مهنة الأم */}
-                    <Input
-                        className='h-[33px]'
-                        label="المهنة"
-                        required
-                        placeholder="مثال: معلمة"
-                        value={motherJob}
-                        onChange={(e) => setMotherJob(e.target.value)}
-                    />
-
-                    {/* رقم هاتف الأم - PhoneInput مُهيأ بالكامل */}
-                    <div>
-                        <label className="block text-sm font-medium text-[#000f0b] mb-1.5 after:content-['(مطلوب)'] after:text-red-500 after:mr-1">
-                            رقم الهاتف
-                        </label>
-                        <PhoneInput
-                            country={'iq'}
-                            value={motherPhone}
-                            onChange={(phone) => setMotherPhone(phone)}
-                            inputStyle={{
-                                width: '100%',
-                                height: '33px',
-                                borderRadius: '8px',
-                                border: '1px solid #ACACAC',
-                                fontSize: '14px',
-                                fontFamily: 'Cairo, sans-serif',
-                                backgroundColor: '#fff',
-                                paddingLeft: '48px',
-                                textAlign: 'right',
-                                color: '#000f0b'
-                            }}
-                            buttonStyle={{
-                                border: 'none',
-                                background: 'transparent',
-                                borderLeft: '1px solid #e5e7eb',
-                                borderRadius: '0',
-                                height: '31px',
-                                padding: '0 10px',
-                                top: '1px',
-                                left: '1px',
-                            }}
-                            containerStyle={{
-                                direction: 'ltr',
-                                width: '100%'
-                            }}
-                            dropdownStyle={{
-                                textAlign: 'right',
-                                fontFamily: 'Cairo, sans-serif'
-                            }}
-                        />
-                    </div>
-
-                    {/* البريد الإلكتروني */}
-                    <div className="md:col-span-3">
-                        <Input
-                            className='h-[36px]'
-                            label="البريد الإلكتروني"
-                            required
-                            type="email"
-                            placeholder="example@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                {/* قسم أبناءهم من الطلاب */}
-                <div className="mt-1.5">
-                    <p className="text-sm font-medium text-[#000f0b] mb-2">أبناءهم من الطلاب</p>
-                    <div className="relative w-full">
-                        <Input
-                            className='h-[36px]'
-                            placeholder="اختر الطلاب..."
-                            icon={<ChevronDown size={16} className="text-gray-500" />}
-                            iconPosition="left"
-                        />
-                    </div>
-                </div>
-
-                {/* قسم المستخدم وكلمة المرور */}
-                <div className='bg-[#F8FCFB] border border-gray-200 rounded-lg p-1 mt-2'>
-                    <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-4 ">
-                        <Input
-                            className='h-[35px]'
-                            label="اسم المستخدم"
-                            required
-                            placeholder="username"
-                            icon={<User2 size={16} className="text-gray-400" />}
-                            iconPosition="left"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                        <Input
-                            className='h-[35px]'
-                            label="كلمة المرور"
-                            required
-                            type="password"
-                            placeholder="********"
-                            icon={<LockKeyhole size={16} className="text-gray-400" />}
-                            iconPosition="left"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-
-                    {/* زر توليد الحساب */}
-                    <div className="mt-1.5 flex justify-start ">
-                        <Button variant="primary" size="sm" className="px-4 py-2" leftIcon={<UserPen size={16} />}>
-                            توليد الحساب
-                        </Button>
-                    </div>
-                </div>
-                
-
-                {/* الملاحظات */}
-                <div className="">
-                    <Input
-                        label="الملاحظات"
-                        inputClassName="h-20 resize-none"
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </div>
-            </Dialog>
+                onSuccess={fetchParents} // عند الإضافة، يعيد تحميل الجدول
+                token={token}
+            />
         </div>
     );
 }

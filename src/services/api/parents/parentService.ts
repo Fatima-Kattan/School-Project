@@ -46,6 +46,7 @@ export const parentService = {
         });
         const result = await handleResponse(response);
         
+        
         // فك تشفير كلمة السر لكل ولي أمر
         if (result.data && Array.isArray(result.data)) {
             result.data = result.data.map((parent: any) => {
@@ -170,6 +171,18 @@ export const parentService = {
     // GET: إحصائيات
     getStatistics: async (token: string) => {
         const response = await fetch(`${API_BASE_URL}/parents/statistics`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        return handleResponse(response);
+    },
+
+        // GET: جلب كل الطلاب (لاختيار الأبناء)
+    getAllStudents: async (token: string) => {
+        const response = await fetch(`${API_BASE_URL}/students`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
