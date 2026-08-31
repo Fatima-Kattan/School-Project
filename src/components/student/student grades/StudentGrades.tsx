@@ -3,7 +3,7 @@
 'use client';
 
 import type { Student as StudentType } from '@/services/api/students/getStudent';
-import { BookOpen, CheckCircle, XCircle, Award } from 'lucide-react';
+import { CheckCircle, XCircle, Award } from 'lucide-react';
 import { Empty } from '@/components/shared/empty/empty';
 
 interface StudentGradesProps {
@@ -22,37 +22,9 @@ export const StudentGrades = ({ student }: StudentGradesProps) => {
         : 0;
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-                    <BookOpen size={20} className="text-orange-500" />
-                    سجل العلامات
-                    {hasGrades && (
-                        <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                            {totalSubjects} مادة
-                        </span>
-                    )}
-                </h2>
-                
-                {hasGrades && (
-                    <div className="flex gap-4 text-sm flex-wrap">
-                        <span className="flex items-center gap-1">
-                            <CheckCircle size={14} className="text-green-500" />
-                            <span className="text-gray-600">ناجح: {passedSubjects}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <XCircle size={14} className="text-red-500" />
-                            <span className="text-gray-600">راسب: {failedSubjects}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Award size={14} className="text-purple-500" />
-                            <span className="text-gray-600">المعدل: {average > 0 ? average.toFixed(1) : '-'}</span>
-                        </span>
-                    </div>
-                )}
-            </div>
-            
+        <div className="w-full">
             {hasGrades ? (
+                
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
@@ -92,11 +64,13 @@ export const StudentGrades = ({ student }: StudentGradesProps) => {
                     </table>
                 </div>
             ) : (
+                
                 <Empty
                     title="لا سجل علامات بعد"
-                    description="ستظهر علامات الطالب هنا بمجرد خضوعه إلى اختبار وتصحيح نتائجها"
-                    icon={<BookOpen size={48} className="text-gray-300" />}
+                    description="ستظهر علامات الطالب هنا بمجرد خضوعه إلى اختبار وتصحيح نتائجه"
+                    icon={null}
                     showButton={false}
+                    className="bg-transparent border-0 shadow-none p-0 py-16"
                 />
             )}
         </div>
