@@ -2,76 +2,252 @@
 
 'use client';
 
-import type { Student as StudentType } from '@/services/api/students/getStudent';
-import { User, Mail, MapPin, Calendar, BookOpen, Users, Hash } from 'lucide-react';
-
 interface StudentInfoProps {
-    student: StudentType;
+    student: any;
 }
 
 export const StudentInfo = ({ student }: StudentInfoProps) => {
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
-                <User size={20} className="text-blue-500" />
-                معلومات الطالب
-            </h2>
+        <div className="bg-white rounded-[12px] border p-3" style={{ border: '0.5px solid #E0E0E0' }}>
+            <h3 
+                className="mb-3"
+                style={{
+                    fontFamily: 'Cairo',
+                    fontWeight: 500,
+                    fontSize: '15px',
+                    lineHeight: '16px',
+                    color: '#000F0B',
+                }}
+            >
+                بيانات الطالب الأساسية
+            </h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                    <p className="text-sm text-gray-500">اسم الطالب</p>
-                    <p className="font-medium text-gray-800">{student.full_name}</p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">البريد الإلكتروني</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Mail size={14} className="text-gray-400" />
-                        {student.email}
+            <div className="grid grid-cols-5 gap-7">
+                
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        رقم الطالب
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.id}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">الجنس</p>
-                    <p className="font-medium text-gray-800">
-                        {student.gender === 'ذكر' ? '♂ ذكر' : '♀ أنثى'}
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        اسم الطالب
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.full_name}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">تاريخ الميلاد</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Calendar size={14} className="text-gray-400" />
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        الجنس
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.gender}
+                    </p>
+                </div>
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        تاريخ الميلاد
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
                         {student.birth_date}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">المدينة</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <MapPin size={14} className="text-gray-400" />
-                        {student.city}
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        عنوان السكن
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.residential_address || '-'}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">عنوان السكن</p>
-                    <p className="font-medium text-gray-800">{student.residential_address}</p>
-                </div>
-                <div>
-                    <p className="text-sm text-gray-500">الصف</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <BookOpen size={14} className="text-gray-400" />
-                        {student.class?.name || 'غير محدد'}
+
+            
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        تاريخ التسجيل
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.created_at ? new Date(student.created_at).toLocaleDateString('ar-SA') : '-'}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">الشعبة</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Users size={14} className="text-gray-400" />
-                        {student.section?.name || 'غير محدد'}
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        الصف
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.class?.name || '-'}
                     </p>
                 </div>
-                <div>
-                    <p className="text-sm text-gray-500">رقم الطالب</p>
-                    <p className="font-medium text-gray-800 flex items-center gap-1">
-                        <Hash size={14} className="text-gray-400" />
-                        #{student.id}
+                <div 
+                    className="rounded-[12px] border p-2"
+                    style={{ border: '0.5px solid #E0E0E0' }}
+                >
+                    <p 
+                        className="text-gray-500 text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '15px',
+                            lineHeight: '16px',
+                        }}
+                    >
+                        الشعبة
+                    </p>
+                    <p 
+                        className="font-medium text-right"
+                        style={{
+                            fontFamily: 'Cairo',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#000F0B',
+                        }}
+                    >
+                        {student.section?.name || '-'}
                     </p>
                 </div>
             </div>
