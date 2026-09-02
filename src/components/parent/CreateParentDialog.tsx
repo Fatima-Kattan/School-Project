@@ -229,7 +229,7 @@ export default function CreateParentDialog({ isOpen, onClose, onSuccess, token }
                         رقم الهاتف
                     </label>
                     <PhoneInput
-                        country={'iq'}
+                        country={'sy'}
                         value={fatherPhone}
                         onChange={(phone) => setFatherPhone(phone)}
                         inputStyle={{
@@ -287,7 +287,7 @@ export default function CreateParentDialog({ isOpen, onClose, onSuccess, token }
                         رقم الهاتف
                     </label>
                     <PhoneInput
-                        country={'iq'}
+                        country={'sy'}
                         value={motherPhone}
                         onChange={(phone) => setMotherPhone(phone)}
                         inputStyle={{
@@ -409,17 +409,6 @@ export default function CreateParentDialog({ isOpen, onClose, onSuccess, token }
                         {generatedCredentials ? 'إعادة توليد الحساب' : 'توليد الحساب'}
                     </Button>
                 </div>
-            </div>
-            
-
-            {/* الملاحظات */}
-            <div className="">
-                <Input
-                    label="الملاحظات"
-                    inputClassName="h-20 resize-none"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                />
             </div>
         </Dialog>
     );

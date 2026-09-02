@@ -27,7 +27,7 @@ interface Child {
     class_name: string;
 }
 
-// ====== الحصول على التوكن ======
+// ====== Get token ======
 const getToken = () => {
     return localStorage.getItem('token') || '';
 };
@@ -35,7 +35,7 @@ const getToken = () => {
 export default function ParentsPage() {
     const router = useRouter();
 
-    // ====== الحالات العامة ======
+    // ====== General states ======
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [parents, setParents] = useState<Parent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function ParentsPage() {
     const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     
-    // حالات Confirmation Dialog
+    // Confirmation Dialog states
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [parentToDelete, setParentToDelete] = useState<Parent | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -55,7 +55,7 @@ export default function ParentsPage() {
 
     const token = getToken();
 
-    // ====== جلب أولياء الأمور ======
+    // ====== Fetch parents ======
     const fetchParents = useCallback(async () => {
         setLoading(true);
         try {
@@ -75,7 +75,7 @@ export default function ParentsPage() {
         fetchParents();
     }, [fetchParents]);
 
-    // ====== توسيع الصف لجلب الأبناء ======
+    // ====== Expand row to fetch children ======
     const toggleExpand = async (parentId: number) => {
         if (expandedParentId === parentId) {
             setExpandedParentId(null);
@@ -112,7 +112,7 @@ export default function ParentsPage() {
             setChildrenData(prev => ({ ...prev, [parentId]: normalizedChildren }));
 
             if (normalizedChildren.length === 0) {
-                console.warn(`لا يوجد أبناء مرسلين من السيرفر لولي الأمر رقم ${parentId}. تأكد من الـ API.`);
+                console.warn(`No children found for parent ID ${parentId}. Please check the API.`);
             }
 
         } catch (error: any) {
@@ -123,13 +123,13 @@ export default function ParentsPage() {
         }
     };
 
-    // ====== فتح نافذة تأكيد الحذف ======
+    // ====== Open delete confirmation dialog ======
     const handleDeleteClick = async (parent: Parent) => {
         setParentToDelete(parent);
         setIsDeleteDialogOpen(true);
         setLoadingChildren(true);
         
-        // جلب أبناء ولي الأمر
+        // Fetch parent's children
         try {
             const response = await parentService.getChildren(parent.id, token);
             let fetchedChildren: Child[] = [];
@@ -161,14 +161,14 @@ export default function ParentsPage() {
         }
     };
 
-    // ====== تنفيذ الحذف ======
+    // ====== Execute delete ======
     const handleConfirmDelete = async () => {
         if (!parentToDelete) return;
 
         setIsDeleting(true);
         try {
             await parentService.delete(parentToDelete.id, token);
-            toast.success(`تم حذف ولي الأمر "${parentToDelete.full_name_father}" بنجاح`);
+            toast.success(`Parent "${parentToDelete.full_name_father}" deleted successfully`);
             setIsDeleteDialogOpen(false);
             setParentToDelete(null);
             setParentChildren([]);
@@ -181,7 +181,7 @@ export default function ParentsPage() {
         }
     };
 
-    // ====== دالة النسخ العامة ======
+    // ====== General copy function ======
     const handleCopy = (e: React.MouseEvent, parentId: number, field: string, text: string) => {
         e.preventDefault();
         e.stopPropagation();
@@ -195,7 +195,7 @@ export default function ParentsPage() {
         });
     };
 
-    // ====== دالة عرض أيقونة النسخ ======
+    // ====== Render copy icon ======
     const renderCopyIcon = (parentId: number, field: string, size: number, color: string, value: string) => {
         if (copiedField === `${parentId}-${field}`) {
             return <Check size={size} className="text-green-600" />;
@@ -211,7 +211,7 @@ export default function ParentsPage() {
 
     return (
         <div className="min-h-screen bg-[#f4f6f9] p-6" dir="rtl">
-            {/* الهيدر العلوي */}
+            {/* Header */}
             <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <h1 className="text-xl font-bold text-gray-800">أولياء الأمور</h1>
 
@@ -226,7 +226,7 @@ export default function ParentsPage() {
                 </Button>
             </div>
 
-            {/* الجدول */}
+            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right border-collapse text-sm">
@@ -286,7 +286,7 @@ export default function ParentsPage() {
                 </div>
             </div>
 
-            {/* الكومبوننتات */}
+            {/* Components */}
             <CreateParentDialog
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
@@ -301,7 +301,7 @@ export default function ParentsPage() {
                 parent={selectedParent}
             />
             
-            {/* نافذة تأكيد الحذف - مطابقة للتصميم المطلوب */}
+            {/* Delete Confirmation Dialog */}
             <Dialog
                 isOpen={isDeleteDialogOpen}
                 onClose={() => {
@@ -312,22 +312,22 @@ export default function ParentsPage() {
                 onConfirm={handleConfirmDelete}
                 title="حذف أولياء أمر"
                 description={
-                    <div className="py-3">
-                        {/* سؤال التأكيد */}
+                    <div className="">
+                        {/* Confirmation question */}
                         <p className="text-gray-800 text-base mb-3">
                             هل أنت متأكد من حذف ولي الأمر: <span className="text-red-600 font-bold text-base mb-4">
                             {parentToDelete?.full_name_father} و {parentToDelete?.full_name_mother}
                         </span>
                         </p>
 
-                        {/* رسالة تحذير حذف الأبناء */}
+                        {/* Warning message about deleting children */}
                         {parentChildren.length > 0 && (
                             <>
                                 <p className="text-sm font-medium mb-3">
                                     سيؤدي ذلك إلى حذف حسابات أبنائهم أيضاً:
                                 </p>
 
-                                {/* قائمة الأبناء */}
+                                {/* Children list */}
                                 {loadingChildren ? (
                                     <div className="flex justify-center py-3">
                                         <Loader2 className="animate-spin text-gray-400" size={24} />

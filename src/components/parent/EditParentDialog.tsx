@@ -212,7 +212,7 @@ export default function EditParentDialog({ isOpen, onClose, onSuccess, token, pa
                         رقم الهاتف
                     </label>
                     <PhoneInput
-                        country={'iq'}
+                        country={'sy'}
                         value={fatherPhone}
                         onChange={(phone) => setFatherPhone(phone)}
                         inputStyle={{
@@ -270,7 +270,7 @@ export default function EditParentDialog({ isOpen, onClose, onSuccess, token, pa
                         رقم الهاتف
                     </label>
                     <PhoneInput
-                        country={'iq'}
+                        country={'sy'}
                         value={motherPhone}
                         onChange={(phone) => setMotherPhone(phone)}
                         inputStyle={{
