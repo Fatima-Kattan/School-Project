@@ -48,7 +48,6 @@ export default function ParentCard({
 }: ParentCardProps) {
     const router = useRouter();
 
-    // ✅ التعديل الثاني: دالة النسخ صارت تستقبل parentId
     const handleCopy = (e: React.MouseEvent<HTMLDivElement>, parentId: number, field: string, text: string) => {
         e.preventDefault();
         e.stopPropagation();
@@ -62,11 +61,10 @@ export default function ParentCard({
 
     return (
         <>
-            {/* ✅ أزلنا onClick من هنا نهائياً */}
             <tr
                 className={`border-b border-gray-100 hover:bg-gray-50 ${isExpanded ? 'bg-[#eaf7f0]' : ''}`}
             >
-                {/* الأب: هنا فقط يفتح عند الضغط */}
+                {/* الأب */}
                 <td className="px-3 py-3">
                     <div
                         className="flex items-center gap-1.5 cursor-pointer hover:text-[#128c5e] transition-colors"
@@ -77,11 +75,15 @@ export default function ParentCard({
                     </div>
                 </td>
 
-                {/* هاتف الأب */}
+                {/* هاتف الأب - الأيقونة ثابتة في أقصى اليمين */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-                        {renderCopyIcon(parent.id, 'phone_father', 12, 'text-[#007353]', parent.phone_number_father || '')}
-                        <span className="font-mono text-left text-xs text-[#007353]">{parent.phone_number_father || '-'}</span>
+                    <div className="flex items-center justify-between gap-1.5 text-gray-600 text-xs">
+                        <span dir="ltr" className="font-mono text-left text-xs text-[#007353]">
+                            {parent.phone_number_father || '-'}
+                        </span>
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(parent.id, 'phone_father', 16, 'text-[#007353]', parent.phone_number_father || '')}
+                        </div>
                     </div>
                 </td>
 
@@ -91,36 +93,44 @@ export default function ParentCard({
                 {/* الأم */}
                 <td className="px-3 py-3 text-gray-800 text-xs">{parent.full_name_mother || '-'}</td>
 
-                {/* هاتف الأم */}
+                {/* هاتف الأم - الأيقونة ثابتة في أقصى اليمين */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-                        {renderCopyIcon(parent.id, 'phone_mother', 12, 'text-[#007353]', parent.phone_number_mother || '')}
-                        <span className="font-mono text-left text-xs text-[#007353]">{parent.phone_number_mother || '-'}</span>
+                    <div className="flex items-center justify-between gap-1.5 text-gray-600 text-xs">
+                        <span dir="ltr" className="font-mono text-left text-xs text-[#007353]">
+                            {parent.phone_number_mother || '-'}
+                        </span>
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(parent.id, 'phone_mother', 16, 'text-[#007353]', parent.phone_number_mother || '')}
+                        </div>
                     </div>
                 </td>
 
                 {/* مهنة الأم */}
                 <td className="px-3 py-3 text-gray-600 text-xs">{parent.job_mother || '-'}</td>
 
-                {/* البريد الإلكتروني */}
-                <td className="px-3 py-3 w-[150px]">
-                    <div className="flex items-center gap-1 leading-tight text-sm">
-                        {renderCopyIcon(parent.id, 'email', 14, 'text-[#1e88e5]', parent.email || '')}
+                {/* البريد الإلكتروني - يظهر على سطرين */}
+                <td className="px-3 py-3 w-[180px]">
+                    <div className="flex items-start justify-between gap-1 leading-tight text-sm">
                         <a
                             href={`mailto:${parent.email}`}
-                            className="text-[#1e88e5] hover:text-[#0d47a1] underline"
-                            style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                            className="text-[#1e88e5] hover:text-[#0d47a1] underline break-words whitespace-normal"
+                            style={{ wordBreak: 'break-word', overflowWrap: 'break-word', maxWidth: '140px' }}
                         >
                             {parent.email || '-'}
                         </a>
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">
+                            {renderCopyIcon(parent.id, 'email', 16, 'text-[#1e88e5]', parent.email || '')}
+                        </div>
                     </div>
                 </td>
 
-                {/* اسم المستخدم */}
+                {/* اسم المستخدم - الأيقونة ثابتة في أقصى اليمين */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-                        {renderCopyIcon(parent.id, 'user_name', 12, 'text-[#cf993f]', parent.user_name || '')}
+                    <div className="flex items-center justify-between gap-1.5 text-gray-600 text-xs">
                         <span className="font-mono text-left text-xs text-[#cf993f]">{parent.user_name || '-'}</span>
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(parent.id, 'user_name', 16, 'text-[#cf993f]', parent.user_name || '')}
+                        </div>
                     </div>
                 </td>
 
@@ -128,9 +138,6 @@ export default function ParentCard({
                 <td className="px-3 py-3 text-gray-600 text-xs">
                     {parent.created_at ? new Date(parent.created_at).toLocaleDateString('en-CA') : '-'}
                 </td>
-
-                {/* الملاحظات */}
-                <td className="px-3 py-3 text-gray-400 text-xs">-</td>
 
                 {/* خيارات */}
                 <td className="px-3 py-3">
@@ -159,7 +166,7 @@ export default function ParentCard({
             {/* صف الأبناء الممتد */}
             {isExpanded && (
                 <tr className="bg-[#f0f7f5] border-t border-gray-100">
-                    <td colSpan={11} className="p-0">
+                    <td colSpan={10} className="p-0">
                         <div className="py-4 px-6 border-t border-gray-300">
                             <h3 className="font-bold text-gray-800 mb-4 pr-4 text-sm">أبنائهم الطلاب</h3>
 
@@ -176,12 +183,10 @@ export default function ParentCard({
                                             key={child.id}
                                             className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 p-2"
                                         >
-                                            {/* الأيقونة على اليمين */}
                                             <div className="bg-[#f0f7f5] p-2 rounded-xl text-[#2e7d32] shrink-0 ml-2 w-[44px] h-[44px] flex items-center justify-center">
                                                 <User2 size={25} />
                                             </div>
 
-                                            {/* الاسم وزر التفاصيل في الوسط */}
                                             <div className="flex flex-col items-start flex-1 min-w-0 gap-1">
                                                 <p className="font-bold text-gray-800 text-sm text-center break-words">
                                                     {child.student_name}
@@ -197,7 +202,6 @@ export default function ParentCard({
                                                 </div>
                                             </div>
 
-                                            {/* الصف على اليسار */}
                                             <div className="shrink-0 mr-2 h-[33]">
                                                 <span className="bg-[#f0f7f5] text-[#2e7d32] text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                                     {child.class_name}

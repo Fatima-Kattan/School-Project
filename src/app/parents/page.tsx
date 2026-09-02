@@ -8,10 +8,15 @@ import {
     Plus,
     Loader2,
     Check,
-    Copy
+    Copy,
+    Trash2,
+    AlertTriangle,
+    User2,
+    Trash
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/shared/button/button';
+import { Dialog } from '@/components/shared/dialog/dialog';
 import ParentCard from '@/components/parent/ParentCard';
 import CreateParentDialog from '@/components/parent/CreateParentDialog';
 import EditParentDialog from '@/components/parent/EditParentDialog';
@@ -40,6 +45,13 @@ export default function ParentsPage() {
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    
+    // حالات Confirmation Dialog
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [parentToDelete, setParentToDelete] = useState<Parent | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [parentChildren, setParentChildren] = useState<Child[]>([]);
+    const [loadingChildren, setLoadingChildren] = useState(false);
 
     const token = getToken();
 
@@ -111,17 +123,61 @@ export default function ParentsPage() {
         }
     };
 
-    // ====== حذف ولي الأمر ======
-    const handleDelete = async (parent: Parent) => {
-        if (!confirm(`هل أنت متأكد من حذف ولي الأمر "${parent.full_name_father}"؟`)) return;
-
+    // ====== فتح نافذة تأكيد الحذف ======
+    const handleDeleteClick = async (parent: Parent) => {
+        setParentToDelete(parent);
+        setIsDeleteDialogOpen(true);
+        setLoadingChildren(true);
+        
+        // جلب أبناء ولي الأمر
         try {
-            await parentService.delete(parent.id, token);
-            toast.success('تم الحذف بنجاح');
+            const response = await parentService.getChildren(parent.id, token);
+            let fetchedChildren: Child[] = [];
+            
+            if (response && response.data) {
+                if (Array.isArray(response.data)) {
+                    fetchedChildren = response.data;
+                } else if (typeof response.data === 'object') {
+                    if (Array.isArray(response.data.children)) {
+                        fetchedChildren = response.data.children;
+                    } else if (Array.isArray(response.data.students)) {
+                        fetchedChildren = response.data.students;
+                    }
+                }
+            }
+            
+            const normalizedChildren = fetchedChildren.map((child: any) => ({
+                id: child.id,
+                student_name: child.student_name || child.name || child.full_name || 'طالب',
+                class_name: child.class_name || child.grade || child.classroom || child.section || 'بدون صف'
+            }));
+            
+            setParentChildren(normalizedChildren);
+        } catch (error) {
+            console.error('Error fetching children for deletion:', error);
+            setParentChildren([]);
+        } finally {
+            setLoadingChildren(false);
+        }
+    };
+
+    // ====== تنفيذ الحذف ======
+    const handleConfirmDelete = async () => {
+        if (!parentToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await parentService.delete(parentToDelete.id, token);
+            toast.success(`تم حذف ولي الأمر "${parentToDelete.full_name_father}" بنجاح`);
+            setIsDeleteDialogOpen(false);
+            setParentToDelete(null);
+            setParentChildren([]);
             fetchParents();
         } catch (error: any) {
             console.error('Error deleting parent:', error);
             toast.error(error.message || 'حدث خطأ أثناء الحذف');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -185,20 +241,19 @@ export default function ParentsPage() {
                                 <th className="px-3 py-3">البريد الإلكتروني</th>
                                 <th className="px-3 py-3">اسم المستخدم</th>
                                 <th className="px-3 py-3">تاريخ التسجيل</th>
-                                <th className="px-3 py-3">الملاحظات</th>
                                 <th className="px-3 py-3">خيارات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={11} className="text-center py-10">
+                                    <td colSpan={10} className="text-center py-10">
                                         <Loader2 className="animate-spin mx-auto text-gray-400" size={32} />
                                     </td>
                                 </tr>
                             ) : parents.length === 0 ? (
                                 <tr>
-                                    <td colSpan={11} className="text-center py-10 text-gray-500">
+                                    <td colSpan={10} className="text-center py-10 text-gray-500">
                                         لا يوجد أولياء أمور
                                     </td>
                                 </tr>
@@ -216,7 +271,7 @@ export default function ParentsPage() {
                                             children={children}
                                             childrenLoading={isChildrenLoading}
                                             onToggle={() => toggleExpand(parent.id)}
-                                            onDelete={() => handleDelete(parent)}
+                                            onDelete={() => handleDeleteClick(parent)}
                                             onEdit={() => {
                                                 setSelectedParent(parent);
                                                 setIsEditDialogOpen(true);
@@ -231,11 +286,11 @@ export default function ParentsPage() {
                 </div>
             </div>
 
-            {/* ====== استدعاء المكون الجديد للديالوغ ====== */}
+            {/* الكومبوننتات */}
             <CreateParentDialog
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
-                onSuccess={fetchParents} // عند الإضافة، يعيد تحميل الجدول
+                onSuccess={fetchParents}
                 token={token}
             />
             <EditParentDialog
@@ -244,6 +299,65 @@ export default function ParentsPage() {
                 onSuccess={fetchParents}
                 token={token}
                 parent={selectedParent}
+            />
+            
+            {/* نافذة تأكيد الحذف - مطابقة للتصميم المطلوب */}
+            <Dialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => {
+                    setIsDeleteDialogOpen(false);
+                    setParentToDelete(null);
+                    setParentChildren([]);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="حذف أولياء أمر"
+                description={
+                    <div className="py-3">
+                        {/* سؤال التأكيد */}
+                        <p className="text-gray-800 text-base mb-3">
+                            هل أنت متأكد من حذف ولي الأمر: <span className="text-red-600 font-bold text-base mb-4">
+                            {parentToDelete?.full_name_father} و {parentToDelete?.full_name_mother}
+                        </span>
+                        </p>
+
+                        {/* رسالة تحذير حذف الأبناء */}
+                        {parentChildren.length > 0 && (
+                            <>
+                                <p className="text-sm font-medium mb-3">
+                                    سيؤدي ذلك إلى حذف حسابات أبنائهم أيضاً:
+                                </p>
+
+                                {/* قائمة الأبناء */}
+                                {loadingChildren ? (
+                                    <div className="flex justify-center py-3">
+                                        <Loader2 className="animate-spin text-gray-400" size={24} />
+                                    </div>
+                                ) : (
+                                    <ul className="flex flex-wrap gap-3 list-inside space-y-1.5 pr-4 mb-2 ">
+                                        {parentChildren.map((child) => (
+                                            <span key={child.id} className="flex items-center justify-center flex-shrink-1  bg-[#fae5e5] text-red-600 text-md font-bold w-min-[100px] h-[30px] p-2 rounded-xl">
+                                                {child.student_name}
+                                            </span>
+                                        ))}
+                                    </ul>
+                                )}
+                            </>
+                        )}
+
+                        {!loadingChildren && parentChildren.length === 0 && (
+                            <p className="text-gray-500 text-sm text-center py-2  bg-[#fae5e5] rounded-lg">
+                                لا يوجد أبناء مسجلين لهذا ولي الأمر
+                            </p>
+                        )}
+                    </div>
+                }
+                confirmText="تأكيد الحذف"
+                cancelText="إلغاء"
+                confirmVariant="danger"
+                isLoading={isDeleting}
+                leftIcon={<Trash size={16} />}
+                maxWidth="md"
+                closeOnOverlayClick={false}
             />
         </div>
     );

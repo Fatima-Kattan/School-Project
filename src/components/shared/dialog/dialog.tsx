@@ -130,7 +130,7 @@ export const Dialog = ({
                 )}
 
                 {/* المحتوى */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                     {/* العنوان */}
                     {title && (
                         <h2
