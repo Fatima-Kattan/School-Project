@@ -31,7 +31,7 @@ function NotificationPage() {
     // 🔑 دالة جلب التوكن
     const getToken = (): string => {
         try {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('token');
 
             if (token && token.length > 10) {
                 console.log('✅ Token found:', token.substring(0, 20) + '...');
