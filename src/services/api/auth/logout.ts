@@ -13,7 +13,7 @@ export async function logoutAPI(): Promise<LogoutResponse> {
         console.log('🚪 Step 1: Starting logout process...');
 
         //  جلب التوكن من localStorage
-        const authToken = localStorage.getItem('auth_token');
+        const authToken = localStorage.getItem('token');
         console.log('🔑 Auth token found:', authToken ? '✅ Yes' : '❌ No');
 
         //  حذف FCM Token من الـ Backend إذا كان هناك توكن
@@ -32,7 +32,7 @@ export async function logoutAPI(): Promise<LogoutResponse> {
 
         //  تنظيف localStorage
         console.log('🧹 Step 4: Clearing local storage...');
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
         localStorage.removeItem('user');
 
         console.log('✅ Logout successful - Local storage cleaned');
@@ -52,7 +52,7 @@ export async function logoutAPI(): Promise<LogoutResponse> {
 
         // حتى في حالة الخطأ، نقوم بتنظيف localStorage وإعادة التوجيه
         try {
-            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
             localStorage.removeItem('user');
             console.log('🧹 Local storage cleaned despite error');
 

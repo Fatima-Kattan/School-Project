@@ -51,7 +51,8 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResponse> {
         console.log('🔑 Token found:', authToken ? authToken.substring(0, 30) + '...' : '❌ NO TOKEN');
 
         if (authToken) {
-            localStorage.setItem('auth_token', authToken);
+            // ✅ تغيير من 'auth_token' إلى 'token'
+            localStorage.setItem('token', authToken);
             localStorage.setItem('user', JSON.stringify(
                 responseData.user || responseData.data?.user || {}
             ));
