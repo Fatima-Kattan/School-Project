@@ -45,8 +45,8 @@ export const parentService = {
             },
         });
         const result = await handleResponse(response);
-        
-        
+
+
         // فك تشفير كلمة السر لكل ولي أمر
         if (result.data && Array.isArray(result.data)) {
             result.data = result.data.map((parent: any) => {
@@ -62,7 +62,7 @@ export const parentService = {
                 return parent;
             });
         }
-        
+
         return result;
     },
 
@@ -76,14 +76,14 @@ export const parentService = {
             },
         });
         const result = await handleResponse(response);
-        
+
         // فك تشفير كلمة السر
         if (result.data && result.data.user && result.data.user.password) {
             result.data.decrypted_password = decryptPassword(result.data.user.password);
             result.data.user_name = result.data.user.user_name || result.data.user_name;
             result.data.email = result.data.user.email || result.data.email;
         }
-        
+
         return result;
     },
 
@@ -102,18 +102,29 @@ export const parentService = {
     },
 
     // PUT: تحديث ولي أمر
-    update: async (id: number, data: any, token: string) => {
+   // في services/api/parents/parentService.ts
+
+async update(id: string, data: any, token: string) {
+    try {
         const response = await fetch(`${API_BASE_URL}/parents/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
         });
-        return handleResponse(response);
-    },
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'فشل في تحديث ولي الأمر');
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+},
 
     // DELETE: حذف ولي أمر
     delete: async (id: number, token: string) => {
@@ -137,7 +148,7 @@ export const parentService = {
             },
         });
         const result = await handleResponse(response);
-        
+
         // فك تشفير كلمة السر للنتائج
         if (result.data && Array.isArray(result.data)) {
             result.data = result.data.map((parent: any) => {
@@ -152,7 +163,7 @@ export const parentService = {
                 return parent;
             });
         }
-        
+
         return result;
     },
 
@@ -180,7 +191,7 @@ export const parentService = {
         return handleResponse(response);
     },
 
-        // GET: جلب كل الطلاب (لاختيار الأبناء)
+    // GET: جلب كل الطلاب (لاختيار الأبناء)
     getAllStudents: async (token: string) => {
         const response = await fetch(`${API_BASE_URL}/students`, {
             method: 'GET',
@@ -196,7 +207,7 @@ export const parentService = {
 // ====== Helper ======
 const handleResponse = async (response: Response) => {
     const result = await response.json();
-    
+
     if (!response.ok) {
         if (result.errors) {
             const errorMessages = Object.values(result.errors).flat().join(', ');
@@ -204,7 +215,7 @@ const handleResponse = async (response: Response) => {
         }
         throw new Error(result.message || `HTTP ${response.status}`);
     }
-    
+
     return result;
 };
 

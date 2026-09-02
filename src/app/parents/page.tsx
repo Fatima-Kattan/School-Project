@@ -13,9 +13,9 @@ import {
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/shared/button/button';
 import ParentCard from '@/components/parent/ParentCard';
-import CreateParentDialog from '@/components/parent/CreateParentDialog'; // استيراد المكون الجديد
+import CreateParentDialog from '@/components/parent/CreateParentDialog';
+import EditParentDialog from '@/components/parent/EditParentDialog';
 
-// أنواع البيانات للابن
 interface Child {
     id: number;
     student_name: string;
@@ -28,8 +28,8 @@ const getToken = () => {
 };
 
 export default function ParentsPage() {
-    const router = useRouter(); 
-    
+    const router = useRouter();
+
     // ====== الحالات العامة ======
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [parents, setParents] = useState<Parent[]>([]);
@@ -38,6 +38,8 @@ export default function ParentsPage() {
     const [childrenData, setChildrenData] = useState<Record<number, Child[]>>({});
     const [childrenLoading, setChildrenLoading] = useState<Record<number, boolean>>({});
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const token = getToken();
 
@@ -215,6 +217,10 @@ export default function ParentsPage() {
                                             childrenLoading={isChildrenLoading}
                                             onToggle={() => toggleExpand(parent.id)}
                                             onDelete={() => handleDelete(parent)}
+                                            onEdit={() => {
+                                                setSelectedParent(parent);
+                                                setIsEditDialogOpen(true);
+                                            }}
                                             renderCopyIcon={renderCopyIcon}
                                         />
                                     );
@@ -226,11 +232,18 @@ export default function ParentsPage() {
             </div>
 
             {/* ====== استدعاء المكون الجديد للديالوغ ====== */}
-            <CreateParentDialog 
+            <CreateParentDialog
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
                 onSuccess={fetchParents} // عند الإضافة، يعيد تحميل الجدول
                 token={token}
+            />
+            <EditParentDialog
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onSuccess={fetchParents}
+                token={token}
+                parent={selectedParent}
             />
         </div>
     );

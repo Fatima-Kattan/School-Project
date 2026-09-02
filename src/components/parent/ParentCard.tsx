@@ -25,8 +25,6 @@ interface Child {
     student_name: string;
     class_name: string;
 }
-
-// ✅ التعديل الأول: عدلنا الـ Interface ليستقبل parentId
 interface ParentCardProps {
     parent: Parent;
     isExpanded: boolean;
@@ -34,6 +32,7 @@ interface ParentCardProps {
     childrenLoading: boolean;
     onToggle: () => void;
     onDelete: () => void;
+    onEdit: () => void;
     renderCopyIcon: (parentId: number, field: string, size: number, color: string, value: string) => React.ReactNode;
 }
 
@@ -44,13 +43,14 @@ export default function ParentCard({
     childrenLoading,
     onToggle,
     onDelete,
+    onEdit,
     renderCopyIcon
 }: ParentCardProps) {
     const router = useRouter();
 
     // ✅ التعديل الثاني: دالة النسخ صارت تستقبل parentId
     const handleCopy = (e: React.MouseEvent<HTMLDivElement>, parentId: number, field: string, text: string) => {
-        e.preventDefault(); 
+        e.preventDefault();
         e.stopPropagation();
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
@@ -68,9 +68,9 @@ export default function ParentCard({
             >
                 {/* الأب: هنا فقط يفتح عند الضغط */}
                 <td className="px-3 py-3">
-                    <div 
+                    <div
                         className="flex items-center gap-1.5 cursor-pointer hover:text-[#128c5e] transition-colors"
-                        onClick={onToggle} 
+                        onClick={onToggle}
                     >
                         <span className="text-gray-800 font-semibold text-xs">{parent.full_name_father || '-'}</span>
                         {isExpanded ? <ChevronUp size={12} className="text-gray-500" /> : <ChevronDown size={12} className="text-gray-500" />}
@@ -137,7 +137,10 @@ export default function ParentCard({
                     <div className="flex items-center gap-1">
                         <button
                             className="text-orange-500 hover:text-orange-700 p-1"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit();
+                            }}
                             title="تعديل"
                         >
                             <PenSquareIcon size={15} />
