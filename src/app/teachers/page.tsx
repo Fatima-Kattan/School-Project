@@ -3,7 +3,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { teacherService, Teacher } from '@/services/api/teachers/teacherService';
+import { teacherService, Teacher, TeacherClass, TeacherSubject } from '@/services/api/teachers/teacherService';
 import {
     Plus,
     Loader2,
@@ -37,6 +37,12 @@ export default function TeachersPage() {
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     
+    // Expand states
+    const [expandedTeacherId, setExpandedTeacherId] = useState<number | null>(null);
+    const [teacherClasses, setTeacherClasses] = useState<Record<number, TeacherClass[]>>({});
+    const [teacherSubjects, setTeacherSubjects] = useState<Record<number, TeacherSubject[]>>({});
+    const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
+    
     // Confirmation Dialog states
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
@@ -63,6 +69,39 @@ export default function TeachersPage() {
     useEffect(() => {
         fetchTeachers();
     }, [fetchTeachers]);
+
+    // ====== Toggle expand to fetch classes and subjects ======
+    const toggleExpand = async (teacherId: number) => {
+        if (expandedTeacherId === teacherId) {
+            setExpandedTeacherId(null);
+            return;
+        }
+
+        setExpandedTeacherId(teacherId);
+        setLoadingDetails(prev => ({ ...prev, [teacherId]: true }));
+
+        try {
+            // Fetch classes and subjects in parallel
+            const [classesResponse, subjectsResponse] = await Promise.all([
+                teacherService.getClasses(teacherId, token),
+                teacherService.getSubjects(teacherId, token)
+            ]);
+
+            if (classesResponse.data) {
+                setTeacherClasses(prev => ({ ...prev, [teacherId]: classesResponse.data }));
+            }
+
+            if (subjectsResponse.data) {
+                setTeacherSubjects(prev => ({ ...prev, [teacherId]: subjectsResponse.data }));
+            }
+
+        } catch (error: any) {
+            console.error('Error fetching teacher details:', error);
+            toast.error('حدث خطأ أثناء جلب تفاصيل المدرس');
+        } finally {
+            setLoadingDetails(prev => ({ ...prev, [teacherId]: false }));
+        }
+    };
 
     // ====== Open delete confirmation dialog ======
     const handleDeleteClick = (teacher: Teacher) => {
@@ -140,14 +179,14 @@ export default function TeachersPage() {
                     <table className="w-full text-right border-collapse text-sm">
                         <thead>
                             <tr className="bg-[#f8f9fa] text-gray-600 font-bold border-b border-gray-200 text-xs">
-                                <th className="px-3 py-3">الاسم</th>
-                                <th className="px-3 py-3">الجنس</th>
-                                <th className="px-3 py-3">رقم الهاتف</th>
-                                <th className="px-3 py-3">البريد الإلكتروني</th>
-                                <th className="px-3 py-3">اسم المستخدم</th>
-                                <th className="px-3 py-3">ملاحظات</th>
-                                <th className="px-3 py-3">تاريخ التسجيل</th>
-                                <th className="px-3 py-3">خيارات</th>
+                                <th className="px-3 py-3 text-right">اسم الأستاذ</th>
+                                <th className="px-3 py-3 text-right">الجنس</th>
+                                <th className="px-3 py-3 text-right">البريد الإلكتروني</th>
+                                <th className="px-3 py-3 text-right">اسم المستخدم</th>
+                                <th className="px-3 py-3 text-right">رقم الهاتف</th>
+                                <th className="px-3 py-3 text-right">تاريخ التسجيل</th>
+                                <th className="px-3 py-3 text-right">ملاحظات</th>
+                                <th className="px-3 py-3 text-right">خيارات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -164,18 +203,30 @@ export default function TeachersPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                teachers.map((teacher) => (
-                                    <TeacherCard
-                                        key={teacher.id}
-                                        teacher={teacher}
-                                        onDelete={() => handleDeleteClick(teacher)}
-                                        onEdit={() => {
-                                            setSelectedTeacher(teacher);
-                                            setIsEditDialogOpen(true);
-                                        }}
-                                        renderCopyIcon={renderCopyIcon}
-                                    />
-                                ))
+                                teachers.map((teacher) => {
+                                    const isExpanded = expandedTeacherId === teacher.id;
+                                    const classes = teacherClasses[teacher.id] || [];
+                                    const subjects = teacherSubjects[teacher.id] || [];
+                                    const isLoadingDetails = loadingDetails[teacher.id] || false;
+
+                                    return (
+                                        <TeacherCard
+                                            key={teacher.id}
+                                            teacher={teacher}
+                                            onDelete={() => handleDeleteClick(teacher)}
+                                            onEdit={() => {
+                                                setSelectedTeacher(teacher);
+                                                setIsEditDialogOpen(true);
+                                            }}
+                                            renderCopyIcon={renderCopyIcon}
+                                            isExpanded={isExpanded}
+                                            onToggle={() => toggleExpand(teacher.id)}
+                                            teacherClasses={classes}
+                                            teacherSubjects={subjects}
+                                            loadingDetails={isLoadingDetails}
+                                        />
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
