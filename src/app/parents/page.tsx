@@ -12,7 +12,8 @@ import {
     Trash2,
     AlertTriangle,
     User2,
-    Trash
+    Trash,
+    X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/shared/button/button';
@@ -45,13 +46,14 @@ export default function ParentsPage() {
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    
-    // Confirmation Dialog states
+
+    // ✅ Confirmation Dialog states (معدلة)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [parentToDelete, setParentToDelete] = useState<Parent | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [parentChildren, setParentChildren] = useState<Child[]>([]);
     const [loadingChildren, setLoadingChildren] = useState(false);
+    const [hasChildren, setHasChildren] = useState(false);
 
     const token = getToken();
 
@@ -123,17 +125,18 @@ export default function ParentsPage() {
         }
     };
 
-    // ====== Open delete confirmation dialog ======
+    // ====== ✅ Open delete confirmation dialog (معدلة) ======
     const handleDeleteClick = async (parent: Parent) => {
         setParentToDelete(parent);
         setIsDeleteDialogOpen(true);
         setLoadingChildren(true);
-        
-        // Fetch parent's children
+        setHasChildren(false);
+        setParentChildren([]);
+
         try {
             const response = await parentService.getChildren(parent.id, token);
             let fetchedChildren: Child[] = [];
-            
+
             if (response && response.data) {
                 if (Array.isArray(response.data)) {
                     fetchedChildren = response.data;
@@ -145,37 +148,59 @@ export default function ParentsPage() {
                     }
                 }
             }
-            
+
             const normalizedChildren = fetchedChildren.map((child: any) => ({
                 id: child.id,
                 student_name: child.student_name || child.name || child.full_name || 'طالب',
                 class_name: child.class_name || child.grade || child.classroom || child.section || 'بدون صف'
             }));
-            
+
             setParentChildren(normalizedChildren);
+
+            if (normalizedChildren.length > 0) {
+                setHasChildren(true);
+            }
+
         } catch (error) {
             console.error('Error fetching children for deletion:', error);
             setParentChildren([]);
+            setHasChildren(false);
         } finally {
             setLoadingChildren(false);
         }
     };
 
-    // ====== Execute delete ======
+    // ====== ✅ Execute delete (معدلة) ======
     const handleConfirmDelete = async () => {
         if (!parentToDelete) return;
 
         setIsDeleting(true);
         try {
             await parentService.delete(parentToDelete.id, token);
-            toast.success(`Parent "${parentToDelete.full_name_father}" deleted successfully`);
+            toast.success(`تم حذف ولي الأمر "${parentToDelete.full_name_father}" بنجاح`);
             setIsDeleteDialogOpen(false);
             setParentToDelete(null);
             setParentChildren([]);
+            setHasChildren(false);
             fetchParents();
         } catch (error: any) {
             console.error('Error deleting parent:', error);
-            toast.error(error.message || 'حدث خطأ أثناء الحذف');
+
+            if (error.status === 422) {
+                toast.error(error.message || 'لا يمكن حذف ولي الأمر لأنه مرتبط بطلاب');
+
+                if (error.data && error.data.children) {
+                    const children = error.data.children.map((child: any) => ({
+                        id: child.id,
+                        student_name: child.full_name || child.name || 'طالب',
+                        class_name: child.class_name || 'بدون صف'
+                    }));
+                    setParentChildren(children);
+                    setHasChildren(true);
+                }
+            } else {
+                toast.error(error.message || 'حدث خطأ أثناء الحذف');
+            }
         } finally {
             setIsDeleting(false);
         }
@@ -300,65 +325,35 @@ export default function ParentsPage() {
                 token={token}
                 parent={selectedParent}
             />
-            
-            {/* Delete Confirmation Dialog */}
+
+            {/* ✅ Delete Confirmation Dialog - معدل حسب الصورة */}
             <Dialog
                 isOpen={isDeleteDialogOpen}
                 onClose={() => {
                     setIsDeleteDialogOpen(false);
                     setParentToDelete(null);
                     setParentChildren([]);
+                    setHasChildren(false);
                 }}
-                onConfirm={handleConfirmDelete}
+                onConfirm={hasChildren ? () => {
+                    setIsDeleteDialogOpen(false);
+                    setParentToDelete(null);
+                    setParentChildren([]);
+                    setHasChildren(false);
+                } : handleConfirmDelete}
                 title="حذف أولياء أمر"
-                description={
-                    <div className="">
-                        {/* Confirmation question */}
-                        <p className="text-gray-800 text-base mb-3">
-                            هل أنت متأكد من حذف ولي الأمر: <span className="text-red-600 font-bold text-base mb-4">
-                            {parentToDelete?.full_name_father} و {parentToDelete?.full_name_mother}
-                        </span>
-                        </p>
-
-                        {/* Warning message about deleting children */}
-                        {parentChildren.length > 0 && (
-                            <>
-                                <p className="text-sm font-medium mb-3">
-                                    سيؤدي ذلك إلى حذف حسابات أبنائهم أيضاً:
-                                </p>
-
-                                {/* Children list */}
-                                {loadingChildren ? (
-                                    <div className="flex justify-center py-3">
-                                        <Loader2 className="animate-spin text-gray-400" size={24} />
-                                    </div>
-                                ) : (
-                                    <ul className="flex flex-wrap gap-3 list-inside space-y-1.5 pr-4 mb-2 ">
-                                        {parentChildren.map((child) => (
-                                            <span key={child.id} className="flex items-center justify-center flex-shrink-1  bg-[#fae5e5] text-red-600 text-md font-bold w-min-[100px] h-[30px] p-2 rounded-xl">
-                                                {child.student_name}
-                                            </span>
-                                        ))}
-                                    </ul>
-                                )}
-                            </>
-                        )}
-
-                        {!loadingChildren && parentChildren.length === 0 && (
-                            <p className="text-gray-500 text-sm text-center py-2  bg-[#fae5e5] rounded-lg">
-                                لا يوجد أبناء مسجلين لهذا ولي الأمر
-                            </p>
-                        )}
-                    </div>
-                }
-                confirmText="تأكيد الحذف"
-                cancelText="إلغاء"
-                confirmVariant="danger"
-                isLoading={isDeleting}
-                leftIcon={<Trash size={16} />}
-                maxWidth="md"
-                closeOnOverlayClick={false}
-            />
+                description={hasChildren ? "هذا الولي لديه أطفال. هل أنت متأكد من رغبتك في حذفه؟" : "هل أنت متأكد من رغبتك في حذف هذا الولي؟"}
+            confirmText={hasChildren ? "إغلاق" : "تأكيد الحذف"}
+            cancelText={hasChildren ? undefined : "إلغاء"}
+            confirmVariant={hasChildren ? "ghost-outline" : "destructive"}  // ghost-outline = بدون لون + بوردر
+            cancelVariant="ghost-outline"
+            isLoading={isDeleting}
+            leftIcon={hasChildren ? "" : <Trash size={16} />}
+            maxWidth="md"
+            closeOnOverlayClick={false}
+            showCancel={!hasChildren}
+            hideCloseButton={true}
+/>
         </div>
     );
 }

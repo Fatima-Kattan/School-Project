@@ -10,7 +10,10 @@ export type ButtonVariant =
     | 'danger'       
     | 'warning'      
     | 'ghost'        
-    | 'ghost-outline'; 
+    | 'ghost-outline'
+    | 'secondary'
+    | 'destructive'
+    ; 
 
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -52,6 +55,8 @@ const variantClasses = {
     warning: 'bg-[#D97706] hover:bg-[#D97706]/90 active:bg-[#D97706]/80 text-white shadow-sm hover:shadow',
     ghost: 'bg-transparent hover:bg-gray-100/50 active:bg-gray-100/70 text-[#000F0B]',
     'ghost-outline': 'bg-transparent border border-[#E0E0E0] hover:bg-gray-100/30 active:bg-gray-100/50 text-[#000F0B]',
+    secondary: 'bg-[#E5E5E5] hover:bg-[#E5E5E5]/90 active:bg-[#E5E5E5]/80 text-[#000F0B] shadow-sm hover:shadow',
+    destructive: 'bg-[#DC2626] hover:bg-[#DC2626]/90 active:bg-[#DC2626]/80 text-white shadow-sm hover:shadow',
 };
 
     const sizeClasses = {
@@ -86,7 +91,9 @@ const variantClasses = {
         danger: 'focus:ring-content-critical',
         warning: 'focus:ring-content-warning',
         ghost: 'focus:ring-content-secondary',
+        secondary: 'focus:ring-content-secondary',
         'ghost-outline': 'focus:ring-content-secondary',
+        destructive: 'focus:ring-content-critical',
     };
 
     return (
