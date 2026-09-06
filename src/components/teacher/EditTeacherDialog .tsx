@@ -123,7 +123,7 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
             confirmVariant="primary"
             showCancel={true}
             showConfirm={true}
-            maxWidth="lg"
+            maxWidth="2xl"
             onConfirm={handleUpdate}
             isLoading={isSubmitting}
             leftIcon={<Save size={16} />}
@@ -139,32 +139,34 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
                     onChange={(e) => setFullName(e.target.value)}
                 />
 
-                {/* Gender */}
+                {/* Gender - نفس تنسيق الكريت */}
                 <div>
-                    <label className="block text-sm font-medium text-[#000f0b] mb-1.5 after:content-['(مطلوب)'] after:text-red-500 after:mr-1">
-                        الجنس
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        الجنس <span className="text-red-500">(مطلوب)</span>
                     </label>
-                    <div className="flex gap-4">
-                        <label className="flex items-center gap-2 text-sm">
-                            <input
-                                type="radio"
-                                value="ذكر"
-                                checked={gender === 'ذكر'}
-                                onChange={() => setGender('ذكر')}
-                                className="w-4 h-4 text-[#007353]"
-                            />
+                    <div className="flex gap-3 p-1 bg-white rounded-[12px] border border-[#ACACAC]">
+                        <button
+                            type="button"
+                            onClick={() => setGender('ذكر')}
+                            className={`flex-1 h-[34px] rounded-[10px] transition-all text-sm font-medium ${
+                                gender === 'ذكر'
+                                    ? 'bg-[#007353] text-white shadow-sm'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
                             ذكر
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                            <input
-                                type="radio"
-                                value="أنثى"
-                                checked={gender === 'أنثى'}
-                                onChange={() => setGender('أنثى')}
-                                className="w-4 h-4 text-[#007353]"
-                            />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setGender('أنثى')}
+                            className={`flex-1 h-[34px] rounded-[10px] transition-all text-sm font-medium ${
+                                gender === 'أنثى'
+                                    ? 'bg-[#007353] text-white shadow-sm'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
                             أنثى
-                        </label>
+                        </button>
                     </div>
                 </div>
 
@@ -214,10 +216,9 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
                 </div>
             </div>
 
-            {/* Account Section */}
             <div className='bg-[#F8FCFB] border border-gray-200 rounded-lg p-3 mt-2'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Username */}
+                    {/* حقل اسم المستخدم - قابل للتعديل يدوياً */}
                     <div>
                         <p className="text-sm font-medium text-[#000f0b] mb-1.5">اسم المستخدم</p>
                         <div className="flex items-center gap-2">
@@ -225,7 +226,7 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
                                 value={userName}
                                 onChange={(e) => setUserName(e.target.value)}
                                 className="w-full h-[35px] px-3 rounded-lg border border-[#ACACAC] bg-white text-sm text-[#000f0b] focus:outline-none focus:border-[#007353] focus:ring-2 focus:ring-[#007353]/20"
-                                placeholder="اسم المستخدم"
+                                placeholder="أدخل اسم المستخدم"
                             />
                             <button
                                 type="button"
@@ -239,9 +240,10 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
                                 )}
                             </button>
                         </div>
+                        <p className="text-xs text-gray-500 mt-1">يمكنك تعديل اسم المستخدم يدوياً</p>
                     </div>
 
-                    {/* Password */}
+                    {/* حقل كلمة المرور - للعرض فقط مع زر إعادة تعيين */}
                     <div>
                         <p className="text-sm font-medium text-[#000f0b] mb-1.5">كلمة المرور</p>
                         <div className="flex items-center gap-2">
@@ -273,6 +275,7 @@ export default function EditTeacherDialog({ isOpen, onClose, onSuccess, token, t
                                 <span className="text-sm whitespace-nowrap">إعادة تعيين</span>
                             </button>
                         </div>
+                        <p className="text-xs text-gray-500 mt-1">كلمة المرور مشفرة، يمكنك إعادة تعيينها فقط</p>
                     </div>
                 </div>
             </div>

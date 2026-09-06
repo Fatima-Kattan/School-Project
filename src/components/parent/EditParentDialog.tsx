@@ -353,7 +353,7 @@ export default function EditParentDialog({ isOpen, onClose, onSuccess, token, pa
                                 value={generatedPassword || ''}
                                 type="text"
                                 className="w-full h-[35px] px-3 rounded-lg border border-[#ACACAC] bg-gray-50 text-sm text-[#000f0b] focus:outline-none"
-                                placeholder="كلمة المرور الحالية"
+                                placeholder="كلمة المرور "
                             />
                             <button
                                 type="button"

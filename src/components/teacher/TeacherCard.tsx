@@ -65,18 +65,17 @@ export default function TeacherCard({
 
                 {/* Gender */}
                 <td className="px-3 py-3">
-                    <span className={`text-xs font-medium ${
-                        teacher.gender === 'ذكر' 
-                            ? 'text-blue-600' 
-                            : 'text-pink-600'
-                    }`}>
+                    <span className={`text-xs font-medium ${teacher.gender === 'ذكر'
+                        ? 'text-blue-600'
+                        : 'text-pink-600'
+                        }`}>
                         {teacher.gender || '-'}
                     </span>
                 </td>
 
                 {/* Email with copy icon */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-around text-gray-600 text-xs">
                         <a
                             href={`mailto:${teacher.email}`}
                             className="text-[#1e88e5] hover:text-[#0d47a1] underline text-xs break-words"
@@ -84,27 +83,35 @@ export default function TeacherCard({
                         >
                             {teacher.email || '-'}
                         </a>
-                        {renderCopyIcon(teacher.id, 'email', 14, 'text-[#1e88e5]', teacher.email || '')}
-                    </div>
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(teacher.id, 'email', 14, 'text-[#1e88e5]', teacher.email || '')}
+                            </div>
+                        </div>
                 </td>
 
                 {/* Username with copy icon */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-around text-gray-600 text-xs">
                         <span className="font-mono text-left text-xs text-[#cf993f]">
                             {teacher.user_name || '-'}
                         </span>
-                        {renderCopyIcon(teacher.id, 'username', 14, 'text-[#cf993f]', teacher.user_name || '')}
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(teacher.id, 'username', 14, 'text-[#cf993f]', teacher.user_name || '')}
+                        </div>
                     </div>
                 </td>
 
                 {/* Phone Number with copy icon */}
                 <td className="px-3 py-3">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-around text-gray-600 text-xs">
                         <span dir="ltr" className="font-mono text-left text-xs text-[#007353]">
                             {teacher.phone_number || '-'}
                         </span>
-                        {renderCopyIcon(teacher.id, 'phone', 14, 'text-[#007353]', teacher.phone_number || '')}
+                        <div />
+
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {renderCopyIcon(teacher.id, 'phone', 14, 'text-[#007353]', teacher.phone_number || '')}
+                        </div>
                     </div>
                 </td>
 

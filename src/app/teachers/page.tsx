@@ -23,7 +23,10 @@ import EditTeacherDialog from '@/components/teacher/EditTeacherDialog ';
 
 // ====== Get token ======
 const getToken = () => {
-    return localStorage.getItem('token') || '';
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('token') || '';
+    }
+    return '';
 };
 
 export default function TeachersPage() {
@@ -36,22 +39,26 @@ export default function TeachersPage() {
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    
+
     // Expand states
     const [expandedTeacherId, setExpandedTeacherId] = useState<number | null>(null);
     const [teacherClasses, setTeacherClasses] = useState<Record<number, TeacherClass[]>>({});
     const [teacherSubjects, setTeacherSubjects] = useState<Record<number, TeacherSubject[]>>({});
     const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
-    
+
     // Confirmation Dialog states
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const token = getToken();
-
     // ====== Fetch teachers ======
     const fetchTeachers = useCallback(async () => {
+        const token = getToken();
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
         setLoading(true);
         try {
             const response = await teacherService.getAll(token);
@@ -64,7 +71,7 @@ export default function TeachersPage() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [router]);
 
     useEffect(() => {
         fetchTeachers();
@@ -81,6 +88,7 @@ export default function TeachersPage() {
         setLoadingDetails(prev => ({ ...prev, [teacherId]: true }));
 
         try {
+            const token = getToken();
             // Fetch classes and subjects in parallel
             const [classesResponse, subjectsResponse] = await Promise.all([
                 teacherService.getClasses(teacherId, token),
@@ -115,6 +123,7 @@ export default function TeachersPage() {
 
         setIsDeleting(true);
         try {
+            const token = getToken();
             await teacherService.delete(teacherToDelete.id, token);
             toast.success(`Teacher "${teacherToDelete.full_name}" deleted successfully`);
             setIsDeleteDialogOpen(false);
@@ -238,16 +247,16 @@ export default function TeachersPage() {
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
                 onSuccess={fetchTeachers}
-                token={token}
+                token={getToken()}
             />
             <EditTeacherDialog
                 isOpen={isEditDialogOpen}
                 onClose={() => setIsEditDialogOpen(false)}
                 onSuccess={fetchTeachers}
-                token={token}
+                token={getToken()}
                 teacher={selectedTeacher}
             />
-            
+
             {/* Delete Confirmation Dialog */}
             <Dialog
                 isOpen={isDeleteDialogOpen}
@@ -260,13 +269,9 @@ export default function TeachersPage() {
                 description={
                     <div className="py-3">
                         <p className="text-gray-800 text-base mb-3">
-                            هل أنت متأكد من حذف المدرس:
-                        </p>
-                        <p className="text-red-600 font-bold text-base mb-4">
-                            {teacherToDelete?.full_name}
-                        </p>
-                        <p className="text-amber-700 text-sm font-medium">
-                            سيؤدي ذلك إلى حذف حساب المستخدم المرتبط به أيضاً.
+                            هل أنت متأكد من حذف المدرس: <span className="text-red-600 font-bold text-base mb-4">
+                                {teacherToDelete?.full_name}
+                            </span>
                         </p>
                     </div>
                 }
@@ -275,7 +280,7 @@ export default function TeachersPage() {
                 confirmVariant="danger"
                 isLoading={isDeleting}
                 leftIcon={<Trash size={16} />}
-                maxWidth="md"
+                maxWidth="lg"
                 closeOnOverlayClick={false}
             />
         </div>
