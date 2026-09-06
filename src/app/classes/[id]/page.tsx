@@ -1,0 +1,158 @@
+// src/app/classes/[id]/page.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import ClassDetails from '@/components/class/class details/ClassDetails';
+
+export default function ClassDetailPage() {
+    const params = useParams();
+    const router = useRouter();
+    const [classData, setClassData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // ✅ جلب التوكن من localStorage (يعمل في Client Component)
+                const token = localStorage.getItem('token') ||
+                                localStorage.getItem('auth_token') ||
+                                localStorage.getItem('access_token');
+
+                console.log('🔑 Token found:', token ? 'Yes' : 'No');
+
+                if (!token) {
+                    console.log('❌ No token, redirecting to login');
+                    router.push('/login');
+                    return;
+                }
+
+                console.log(`📌 Fetching class ${params.id}...`);
+
+                // جلب بيانات الصف
+                const response = await fetch(
+                    `http://localhost:8000/api/dashboard/classes/${params.id}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                console.log('📥 Response status:', response.status);
+
+                // إذا كان 401 → غير مصرح
+                if (response.status === 401) {
+                    console.log('❌ Unauthorized, redirecting to login');
+                    router.push('/login');
+                    return;
+                }
+
+                // إذا كان 404 → الصف غير موجود
+                if (response.status === 404) {
+                    setError('الصف غير موجود');
+                    setLoading(false);
+                    return;
+                }
+
+                // إذا كان خطأ آخر
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📦 Data received:', data);
+
+                // التحقق من صحة البيانات
+                if (!data.success || !data.data) {
+                    throw new Error(data.message || 'Class not found');
+                }
+
+                const { class: classData, statistics } = data.data;
+
+                // تحويل البيانات للشكل المطلوب
+                const formattedData = {
+                    id: classData.id.toString(),
+                    name: classData.name,
+                    grade: classData.name,
+                    level: 'أساسي',
+                    comment: classData.comment || '',
+                    sections: classData.sections || [],
+                    subjects: classData.subjects || [],
+                    students: classData.students || [],
+                    statistics: {
+                        total_students: statistics?.total_students || 0,
+                        total_sections: statistics?.total_sections || 0,
+                        total_subjects: statistics?.total_subjects || 0,
+                        total_teachers: statistics?.total_teachers || 0,
+                    },
+                };
+
+                setClassData(formattedData);
+                setError(null);
+
+            } catch (err: any) {
+                console.error('❌ Error:', err);
+                setError(err.message || 'حدث خطأ');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [params.id, router]);
+
+    // حالة التحميل
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#007353] mx-auto"></div>
+                    <p className="mt-4 text-gray-500">جاري التحميل...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // حالة الخطأ
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px] p-10">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-red-500 mb-2">⚠️ {error}</h2>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                        إعادة المحاولة
+                    </button>
+                    <br />
+                    <a href="/classes" className="mt-2 inline-block text-blue-500 hover:underline">
+                        ← العودة للقائمة
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
+    // لا توجد بيانات
+    if (!classData) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px] p-10">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-orange-500 mb-2">🔍 لا توجد بيانات</h2>
+                    <a href="/classes" className="text-blue-500 hover:underline">
+                        ← العودة للقائمة
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
+    // عرض الصفحة
+    return <ClassDetails classData={classData} />;
+}

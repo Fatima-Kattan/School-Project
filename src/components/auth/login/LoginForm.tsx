@@ -82,10 +82,10 @@ export default function LoginForm() {
                     <form onSubmit={handleSubmit} className={styles.form}>
                         {error && (
                             <div className={styles.errorMessage}>
-                                ⚠️ {error}
+                                {error}⚠️
                             </div>
                         )}
-                        
+
                         <div className={styles.inputGroup}>
                             <Input
                                 id="username"
