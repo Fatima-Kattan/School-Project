@@ -49,7 +49,7 @@ export default function LoginForm() {
             console.log("✅ تم تسجيل الدخول بنجاح:", loginData.user);
 
             // ✅ التوجيه إلى لوحة التحكم بعد نجاح تسجيل الدخول
-            router.push("/students");
+            router.push("/classes");
 
         } catch (err: any) {
             // ✅ عرض رسالة الخطأ للمستخدم
