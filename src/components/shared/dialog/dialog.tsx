@@ -17,6 +17,7 @@ export interface DialogProps {
     rightIcon?: ReactNode;
     confirmText?: string;
     cancelText?: string;
+    closeText?: string;
     confirmVariant?: ButtonVariant;
     cancelVariant?: ButtonVariant;
     showCancel?: boolean;
@@ -39,6 +40,7 @@ export const Dialog = ({
     rightIcon,
     confirmText = 'تأكيد',
     cancelText = 'إلغاء',
+    closeText = 'إغلاق',
     confirmVariant = 'primary',
     cancelVariant = 'ghost-outline',
     showCancel = true,

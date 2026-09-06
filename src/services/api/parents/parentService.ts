@@ -102,29 +102,29 @@ export const parentService = {
     },
 
     // PUT: تحديث ولي أمر
-   // في services/api/parents/parentService.ts
+    // في services/api/parents/parentService.ts
 
-async update(id: string, data: any, token: string) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/parents/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
-        });
+    async update(id: string, data: any, token: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/parents/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'فشل في تحديث ولي الأمر');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'فشل في تحديث ولي الأمر');
+            }
+
+            return await response.json();
+        } catch (error) {
+            throw error;
         }
-
-        return await response.json();
-    } catch (error) {
-        throw error;
-    }
-},
+    },
 
     // DELETE: حذف ولي أمر
     delete: async (id: number, token: string) => {
@@ -135,9 +135,33 @@ async update(id: string, data: any, token: string) {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        return handleResponse(response);
-    },
 
+        // إذا كان الـ Status 422 (Unprocessable Entity) مع وجود أبناء
+        if (response.status === 422) {
+            const errorData = await response.json();
+            // رمي خطأ مع تفاصيل الأبناء
+            throw {
+                status: 422,
+                message: errorData.message || 'لا يمكن حذف ولي الأمر لأنه مرتبط بطلاب',
+                data: errorData.data || null
+            };
+        }
+
+        // إذا كان الـ Response غير ناجح (غير 200, 201, 422)
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw {
+                status: response.status,
+                message: errorData.message || `حدث خطأ أثناء الحذف (${response.status})`,
+                data: errorData.data || null
+            };
+        }
+
+        // في حالة النجاح (200)
+        const data = await response.json();
+        return data;
+    },
+    
     // GET: البحث
     search: async (keyword: string, token: string) => {
         const response = await fetch(`${API_BASE_URL}/parents/search?q=${encodeURIComponent(keyword)}`, {
