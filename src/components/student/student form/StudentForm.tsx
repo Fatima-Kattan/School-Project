@@ -7,7 +7,7 @@ import { Save } from 'lucide-react';
 import { Input } from '@/components/shared/input/inpute';
 import { Textarea } from '@/components/shared/input/Textarea';
 import { Button } from '@/components/shared/button/button';
-import { useClasses } from '@/hooks/useClass';
+import { useClasses } from '@/hooks/useClasses';
 import { useSections } from '@/hooks/useSections';
 import { useParents } from '@/hooks/useParents';
 import { createStudent } from '@/services/api/students/createStudent';

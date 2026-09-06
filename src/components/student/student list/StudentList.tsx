@@ -9,7 +9,7 @@ import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 import { Breadcrumb } from '@/components/shared/breadcrumb/breadcrumb';
 import { useStudents } from '@/hooks/useStudents';
-import { useClasses } from '@/hooks/useClass';
+import { useClasses } from '@/hooks/useClasses';
 import { useSections } from '@/hooks/useSections';
 import { deleteStudent } from '@/services/api/students/deleteStudent';
 import { StudentForm } from '@/components/student/student form/StudentForm';

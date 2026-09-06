@@ -42,7 +42,7 @@ export const Breadcrumb = ({
     const shouldShowBackButton = showBackButton && items.length > 1;
 
     return (
-        <div className={`bg-white border-b border-gray-200 px-0 py-[26px] ${className}`}>
+        <div className={`bg-white border-b border-gray-200 px-0 py-[34px] ${className}`}>
             <div className="flex items-center justify-between px-6">
                 <div className="flex items-center gap-3">
                     
