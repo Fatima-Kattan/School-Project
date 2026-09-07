@@ -10,6 +10,7 @@ import { useClasses } from '@/hooks/useClasses';
 import { ClassForm } from '../class form/ClassForm';
 import { ClassEditForm } from '../class edit form/ClassEditForm';
 import { ClassDeleteForm } from '../class delete form/ClassDeleteForm';
+import { ClassDeleteDialog } from '../class delete form/ClassDeleteDialog';
 
 interface ClassesListProps {
     showBreadcrumb?: boolean;
@@ -30,6 +31,7 @@ export const ClassesList = ({
     const [showFormDialog, setShowFormDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showStudentsDialog, setShowStudentsDialog] = useState(false);
     const [selectedClass, setSelectedClass] = useState<any>(null);
 
     const { classes, loading, refreshClasses, deleteClass, setClasses } = useClasses({});
@@ -52,11 +54,23 @@ export const ClassesList = ({
 
     const openDeleteDialog = (cls: any) => {
         setSelectedClass(cls);
-        setShowDeleteDialog(true);
+        
+        const hasStudents = cls.statistics?.total_students > 0 || (cls.students && cls.students.length > 0);
+        
+        if (hasStudents) {
+            setShowStudentsDialog(true);
+        } else {
+            setShowDeleteDialog(true);
+        }
     };
 
     const closeDeleteDialog = () => {
         setShowDeleteDialog(false);
+        setSelectedClass(null);
+    };
+
+    const closeStudentsDialog = () => {
+        setShowStudentsDialog(false);
         setSelectedClass(null);
     };
 
@@ -304,7 +318,7 @@ export const ClassesList = ({
                             <button
                                 type="button"
                                 onClick={closeDeleteDialog}
-                                className="absolute top-0 left-0 p-2 hover:bg-gray-100 rounded-full transition-colors z-10 cursor-pointer"
+                                className="absolute top-0 left-0 p-2 hover:bg-red-50 active:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 rounded-full transition-colors z-10 cursor-pointer"
                             >
                                 <X size={24} className="text-gray-500" />
                             </button>
@@ -324,6 +338,18 @@ export const ClassesList = ({
                     </div>
                 </div>
             )}
+
+            
+            <ClassDeleteDialog
+                isOpen={showStudentsDialog}
+                classData={{
+                    id: selectedClass?.id,
+                    name: selectedClass?.name,
+                    statistics: selectedClass?.statistics,
+                    students: selectedClass?.students,
+                }}
+                onClose={closeStudentsDialog}
+            />
 
             {showBreadcrumb && (
                 <div className="relative">
