@@ -322,9 +322,7 @@ export const ClassesList = ({
                             >
                                 <X size={24} className="text-gray-500" />
                             </button>
-                            <h2 className="text-xl font-bold text-right mb-4">
-                                حذف صف
-                            </h2>
+                            
                         </div>
 
                         <ClassDeleteForm
