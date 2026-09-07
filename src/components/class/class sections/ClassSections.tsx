@@ -3,12 +3,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, SquarePen, Trash } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, SquarePen, Trash, X } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
+import { SectionForm } from './SectionForm';
+import { Dialog } from '@/components/shared/dialog/dialog';
+// import { SectionDeleteForm } from './SectionDeleteForm';
 
 interface ClassSectionsProps {
     classId: string;
+    className?: string;
     sections: Array<{
         id: number;
         name: string;
@@ -16,42 +20,124 @@ interface ClassSectionsProps {
         teachers_count: number;
     }>;
     onSectionClick?: (sectionId: number) => void;
+    onSectionChanged?: () => void;
 }
 
 export default function ClassSections({
     classId,
+    className,
     sections,
-    onSectionClick
+    onSectionClick,
+    onSectionChanged,
 }: ClassSectionsProps) {
     const router = useRouter();
 
-    // ✅ دالة إضافة شعبة
+    // ✅ حالات الديالوجات
+    const [showFormDialog, setShowFormDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [selectedSection, setSelectedSection] = useState<any>(null);
+    const [mode, setMode] = useState<'create' | 'edit'>('create');
+
+    // ✅ فتح نافذة إضافة شعبة
+    const openAddDialog = () => {
+        setMode('create');
+        setSelectedSection(null);
+        setShowFormDialog(true);
+    };
+
+    // ✅ فتح نافذة تعديل شعبة
+    const openEditDialog = (section: any) => {
+        setMode('edit');
+        setSelectedSection(section);
+        setShowFormDialog(true);
+    };
+
+    // ✅ فتح نافذة حذف شعبة
+    const openDeleteDialog = (section: any) => {
+        setSelectedSection(section);
+        setShowDeleteDialog(true);
+    };
+
+    // ✅ إغلاق الديالوجات
+    const closeFormDialog = () => {
+        setShowFormDialog(false);
+        setSelectedSection(null);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setSelectedSection(null);
+    };
+
+    // ✅ معالج نجاح النموذج (إضافة/تعديل)
+    const handleFormSuccess = () => {
+        setShowFormDialog(false);
+        setSelectedSection(null);
+        if (onSectionChanged) {
+            onSectionChanged();
+        } else {
+            window.location.reload();
+        }
+    };
+
+    // ✅ معالج نجاح الحذف
+    const handleDeleteSuccess = () => {
+        setShowDeleteDialog(false);
+        setSelectedSection(null);
+        if (onSectionChanged) {
+            onSectionChanged();
+        } else {
+            window.location.reload();
+        }
+    };
+
+    // ✅ دالة إضافة شعبة (للزر)
     const handleAddSection = () => {
-        router.push(`/classes/${classId}/sections/create`);
+        openAddDialog();
     };
 
     // ✅ إذا لم توجد شعب → عرض رسالة "لا شعب مضافين بعد"
     if (!sections || sections.length === 0) {
         return (
-            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
-                <div className="flex flex-col items-center justify-center py-12">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        لا شعب مضافين بعد
-                    </h3>
-                    <p className="text-gray-500 text-center mb-6">
-                        قم بإضافة شعب وتابعهم الآن من هنا
-                    </p>
-                    <Button
-                        variant="primary"
-                        onClick={handleAddSection}
-                        leftIcon={<Plus size={16} />}
-                        size="md"
-                        className="px-5 py-2.5 shadow-sm"
-                    >
-                        إضافة شعبة
-                    </Button>
+            <>
+                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                            لا شعب مضافين بعد
+                        </h3>
+                        <p className="text-gray-500 text-center mb-6">
+                            قم بإضافة شعب وتابعهم الآن من هنا
+                        </p>
+                        <Button
+                            variant="primary"
+                            onClick={handleAddSection}
+                            leftIcon={<Plus size={16} />}
+                            size="md"
+                            className="px-5 py-2.5 shadow-sm"
+                        >
+                            إضافة شعبة
+                        </Button>
+                    </div>
                 </div>
-            </div>
+
+                {/* ✅ ديالوج الإضافة */}
+                <Dialog
+                    isOpen={showFormDialog}
+                    onClose={closeFormDialog}
+                    title="إضافة شعبة"
+                    maxWidth="lg"
+                    showCancel={false}
+                    showConfirm={false}
+                >
+                    <SectionForm
+                        mode="create"
+                        classId={parseInt(classId)}
+                        initialData={null}
+                        onSuccess={handleFormSuccess}
+                        onCancel={closeFormDialog}
+                    />
+                </Dialog>
+            </>
         );
     }
 
@@ -92,48 +178,86 @@ export default function ClassSections({
             label: 'عرض',
             icon: <Eye size={16} />,
             variant: 'primary',
-            onClick: (row) => {
-                console.log('📖 View section:', row.id);
-                onSectionClick?.(row.id);
-            },
+            onClick: (row) => router.push(`/sections/${row.id}`),
+
         },
         {
             label: 'تعديل',
             icon: <SquarePen size={16} />,
             variant: 'warning',
-            onClick: (row) => {
-                console.log('✏️ Edit section:', row.id);
-                router.push(`/classes/${classId}/sections/${row.id}/edit`);
-            },
+            onClick: (row) => openEditDialog(row),
         },
         {
             label: 'حذف',
             icon: <Trash size={16} />,
             variant: 'danger',
-            onClick: (row) => {
-                console.log('🗑️ Delete section:', row.id);
-            },
+            onClick: (row) => openDeleteDialog(row),
         },
     ];
 
     return (
-        // ✅ جعل الحاوية تمتد لآخر الصفحة مع الحفاظ على كل شيء
-        <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
-            {/* ✅ استخدام مكون Table */}
-            <Table
-                columns={columns}
-                data={sections}
-                keyExtractor={(row) => row.id}
-                actions={actions}
-                headerBgColor="#F9FCFB"
-                rowBgColor="#FFFFFF"
-                borderColor="#E0E0E0"
-                radius={10}
-                hoverable={true}
-                className="w-full"
-                headerTextColor="#47524F"
-                headerFontWeight={600}
-            />
-        </div>
+        <>
+            {/* ✅ ديالوج الإضافة/التعديل */}
+            <Dialog
+                isOpen={showFormDialog}
+                onClose={closeFormDialog}
+                title={mode === 'create' ? 'إضافة شعبة' : 'تعديل شعبة'}
+                maxWidth="xl"
+                className=" !w-[800px] !max-w-[95vw] "
+                showCancel={false}
+                showConfirm={false}
+            >
+                <SectionForm
+                    mode={mode}
+                    classId={parseInt(classId)}
+                    initialData={mode === 'edit' ? selectedSection : null}
+                    onSuccess={handleFormSuccess}
+                    onCancel={closeFormDialog}
+                />
+            </Dialog>
+
+            {/* ✅ ديالوج الحذف */}
+            {/* {showDeleteDialog && selectedSection && (
+                <Dialog
+                    isOpen={showDeleteDialog}
+                    onClose={closeDeleteDialog}
+                    title="حذف شعبة"
+                    maxWidth="md"
+                    showCancel={false}
+                    showConfirm={false}
+                >
+                    <SectionDeleteForm
+                        sectionData={{
+                            id: selectedSection.id,
+                            name: selectedSection.name,
+                            classId: parseInt(classId),
+                            className: className,
+                        }}
+                        onSuccess={handleDeleteSuccess}
+                        onCancel={closeDeleteDialog}
+                    />
+                </Dialog>
+            )} */}
+
+            {/* ✅ الجدول */}
+            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
+
+                {/* ✅ استخدام مكون Table */}
+                <Table
+                    columns={columns}
+                    data={sections}
+                    keyExtractor={(row) => row.id}
+                    actions={actions}
+                    headerBgColor="#F9FCFB"
+                    rowBgColor="#FFFFFF"
+                    borderColor="#E0E0E0"
+                    radius={10}
+                    hoverable={true}
+                    className="w-full"
+                    headerTextColor="#47524F"
+                    headerFontWeight={600}
+                />
+            </div>
+        </>
     );
 }
