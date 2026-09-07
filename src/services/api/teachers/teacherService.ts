@@ -16,7 +16,6 @@ export interface Teacher {
     decrypted_password?: string;
 }
 
-// ✅ إضافة واجهات للصفوف والمواد
 export interface TeacherClass {
     id: number;
     class_name: string;
@@ -28,6 +27,29 @@ export interface TeacherSubject {
     subject_name: string;
     class_name: string;
     section_name: string;
+}
+
+export interface TeacherWithDetails {
+    id: number;
+    full_name: string;
+    user_name: string;
+    email: string;
+    gender: 'ذكر' | 'أنثى';
+    phone_number: string;
+    comment: string | null;
+    created_at: string;
+    updated_at: string;
+    classes: {
+        class_id: number;
+        class_name: string;
+        sections: {
+            section_id: number;
+            section_name: string;
+        }[];
+    }[];
+    subjects: string[];
+    total_sections: number;
+    total_subjects: number;
 }
 
 export const teacherService = {
@@ -156,7 +178,7 @@ export const teacherService = {
         return response.json();
     },
 
-    // ✅ Get teacher's classes
+    // Get teacher's classes
     async getClasses(teacherId: number, token: string): Promise<{ data: TeacherClass[] }> {
         const response = await fetch(`${API_URL}/dashboard/teachers/${teacherId}/classes`, {
             headers: {
@@ -173,7 +195,7 @@ export const teacherService = {
         return response.json();
     },
 
-    // ✅ Get teacher's subjects
+    // Get teacher's subjects
     async getSubjects(teacherId: number, token: string): Promise<{ data: TeacherSubject[] }> {
         const response = await fetch(`${API_URL}/dashboard/teachers/${teacherId}/subjects`, {
             headers: {
@@ -185,6 +207,49 @@ export const teacherService = {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to fetch teacher subjects');
+        }
+
+        return response.json();
+    },
+
+    // ✅ NEW: Get all teachers with their full details (classes, sections, subjects)
+    async getAllWithDetails(token: string): Promise<{ 
+        success: boolean; 
+        data: TeacherWithDetails[]; 
+        total: number 
+    }> {
+        // ✅ المسار الصحيح: teacher (مفرد)
+        const response = await fetch(`${API_URL}/dashboard/teachers/all-with-details`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch teachers with details');
+        }
+
+        return response.json();
+    },
+
+    // ✅ NEW: Get single teacher with full details
+    async getWithDetails(id: number, token: string): Promise<{ 
+        success: boolean; 
+        data: TeacherWithDetails 
+    }> {
+        // ✅ المسار الصحيح: teacher (مفرد)
+        const response = await fetch(`${API_URL}/dashboard/teachers/${id}/details`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch teacher details');
         }
 
         return response.json();

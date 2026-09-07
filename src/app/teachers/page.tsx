@@ -3,7 +3,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { teacherService, Teacher, TeacherClass, TeacherSubject } from '@/services/api/teachers/teacherService';
+import { teacherService, Teacher, TeacherClass, TeacherSubject, TeacherWithDetails } from '@/services/api/teachers/teacherService';
 import {
     Plus,
     Loader2,
@@ -34,10 +34,10 @@ export default function TeachersPage() {
 
     // ====== General states ======
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [teachers, setTeachers] = useState<TeacherWithDetails[]>([]); // ✅ تغيير إلى TeacherWithDetails
     const [loading, setLoading] = useState(true);
     const [copiedField, setCopiedField] = useState<string | null>(null);
-    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+    const [selectedTeacher, setSelectedTeacher] = useState<TeacherWithDetails | null>(null); // ✅ تغيير
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     // Expand states
@@ -48,10 +48,10 @@ export default function TeachersPage() {
 
     // Confirmation Dialog states
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+    const [teacherToDelete, setTeacherToDelete] = useState<TeacherWithDetails | null>(null); // ✅ تغيير
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // ====== Fetch teachers ======
+    // ====== Fetch teachers with details ======
     const fetchTeachers = useCallback(async () => {
         const token = getToken();
         if (!token) {
@@ -61,9 +61,36 @@ export default function TeachersPage() {
 
         setLoading(true);
         try {
-            const response = await teacherService.getAll(token);
-            if (response.data) {
+            // ✅ استخدام الدالة الجديدة التي تجلب كل شيء دفعة واحدة
+            const response = await teacherService.getAllWithDetails(token);
+            console.log('✅ Teachers with details:', response); // للتحقق
+            
+            if (response.success && response.data) {
                 setTeachers(response.data);
+                
+                // ✅ تخزين البيانات في الـ states المناسبة للتوسيع
+                response.data.forEach((teacher: TeacherWithDetails) => {
+                    // تحويل بيانات الصفوف إلى TeacherClass[]
+                    if (teacher.classes && teacher.classes.length > 0) {
+                        const formattedClasses: TeacherClass[] = teacher.classes.map((cls) => ({
+                            id: cls.class_id,
+                            class_name: cls.class_name,
+                            sections: cls.sections.map((s) => s.section_name)
+                        }));
+                        setTeacherClasses(prev => ({ ...prev, [teacher.id]: formattedClasses }));
+                    }
+                    
+                    // تحويل بيانات المواد إلى TeacherSubject[]
+                    if (teacher.subjects && teacher.subjects.length > 0) {
+                        const formattedSubjects: TeacherSubject[] = teacher.subjects.map((subject, index) => ({
+                            id: index,
+                            subject_name: subject,
+                            class_name: teacher.classes.map(c => c.class_name).join('، ') || 'جميع الصفوف',
+                            section_name: teacher.classes.flatMap(c => c.sections.map(s => s.section_name)).join('، ') || 'جميع الشعب'
+                        }));
+                        setTeacherSubjects(prev => ({ ...prev, [teacher.id]: formattedSubjects }));
+                    }
+                });
             }
         } catch (error: any) {
             console.error('Error fetching teachers:', error);
@@ -77,42 +104,20 @@ export default function TeachersPage() {
         fetchTeachers();
     }, [fetchTeachers]);
 
-    // ====== Toggle expand to fetch classes and subjects ======
+    // ====== Toggle expand - الآن البيانات موجودة مسبقاً ======
     const toggleExpand = async (teacherId: number) => {
         if (expandedTeacherId === teacherId) {
             setExpandedTeacherId(null);
             return;
         }
 
+        // ✅ البيانات موجودة مسبقاً في teacherClasses و teacherSubjects
+        // فقط نعرضها بدون جلب جديد
         setExpandedTeacherId(teacherId);
-        setLoadingDetails(prev => ({ ...prev, [teacherId]: true }));
-
-        try {
-            const token = getToken();
-            // Fetch classes and subjects in parallel
-            const [classesResponse, subjectsResponse] = await Promise.all([
-                teacherService.getClasses(teacherId, token),
-                teacherService.getSubjects(teacherId, token)
-            ]);
-
-            if (classesResponse.data) {
-                setTeacherClasses(prev => ({ ...prev, [teacherId]: classesResponse.data }));
-            }
-
-            if (subjectsResponse.data) {
-                setTeacherSubjects(prev => ({ ...prev, [teacherId]: subjectsResponse.data }));
-            }
-
-        } catch (error: any) {
-            console.error('Error fetching teacher details:', error);
-            toast.error('حدث خطأ أثناء جلب تفاصيل المدرس');
-        } finally {
-            setLoadingDetails(prev => ({ ...prev, [teacherId]: false }));
-        }
     };
 
     // ====== Open delete confirmation dialog ======
-    const handleDeleteClick = (teacher: Teacher) => {
+    const handleDeleteClick = (teacher: TeacherWithDetails) => {
         setTeacherToDelete(teacher);
         setIsDeleteDialogOpen(true);
     };
@@ -125,10 +130,10 @@ export default function TeachersPage() {
         try {
             const token = getToken();
             await teacherService.delete(teacherToDelete.id, token);
-            toast.success(`Teacher "${teacherToDelete.full_name}" deleted successfully`);
+            toast.success(`تم حذف المدرس "${teacherToDelete.full_name}" بنجاح`);
             setIsDeleteDialogOpen(false);
             setTeacherToDelete(null);
-            fetchTeachers();
+            fetchTeachers(); // تحديث القائمة
         } catch (error: any) {
             console.error('Error deleting teacher:', error);
             toast.error(error.message || 'حدث خطأ أثناء الحذف');

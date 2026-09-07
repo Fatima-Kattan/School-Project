@@ -392,10 +392,11 @@ export default function CreateTeacherDialog({ isOpen, onClose, onSuccess, token 
                                 variant="primary"
                                 size="sm"
                                 className="px-4 py-1.5"
-                                leftIcon={<ChevronLeft size={16} />}
+                                rightIcon={<ChevronLeft size={16} />}
                                 onClick={handleNext}
                             >
                                 الخطوة التالية
+                                
                             </Button>
                         </div>
                     </div>
