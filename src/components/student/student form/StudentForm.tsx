@@ -52,6 +52,7 @@ export const StudentForm = ({
         if (!formData.class_id) return [];
         return sections.filter(section => section.class_id === formData.class_id);
     }, [sections, formData.class_id]);
+    const arrowSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
 
     
     useEffect(() => {
@@ -195,7 +196,15 @@ export const StudentForm = ({
                             setFormData({ ...formData, class_id: classId, section_id: 0 });
                             refreshSections();
                         }}
-                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all"
+                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all appearance-none"
+                        style={{
+                            backgroundImage: arrowSvg,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'left 12px center',
+                            backgroundSize: '14px',
+                            paddingRight: '12px',
+                            paddingLeft: '32px',
+                        }}
                         disabled={classesLoading}
                     >
                         <option value={0}>اختر الصف</option>
@@ -214,7 +223,15 @@ export const StudentForm = ({
                     <select
                         value={formData.section_id}
                         onChange={(e) => setFormData({ ...formData, section_id: Number(e.target.value) })}
-                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all"
+                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all appearance-none"
+                        style={{
+                            backgroundImage: arrowSvg,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'left 12px center',
+                            backgroundSize: '14px',
+                            paddingRight: '12px',
+                            paddingLeft: '32px',
+                        }}
                         disabled={!formData.class_id || sectionsLoading}
                     >
                         <option value={0}>اختر الشعبة</option>
@@ -244,7 +261,15 @@ export const StudentForm = ({
                     <select
                         value={formData.parent_id}
                         onChange={(e) => setFormData({ ...formData, parent_id: Number(e.target.value) })}
-                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all"
+                        className="w-full h-[40px] px-3 border border-[#ACACAC] rounded-[12px] focus:border-[#007353] focus:ring-0 bg-white text-sm outline-none transition-all appearance-none"
+                        style={{
+                            backgroundImage: arrowSvg,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'left 12px center',
+                            backgroundSize: '14px',
+                            paddingRight: '12px',
+                            paddingLeft: '32px',
+                        }}
                         disabled={parentsLoading}
                     >
                         <option value={0}>اختر ولي الأمر</option>

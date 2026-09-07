@@ -3,6 +3,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { getClasses } from '@/services/api/classes/getClasses';
 import { getClass } from '@/services/api/classes/getClass';
 import { createClass } from '@/services/api/classes/createClass';
@@ -75,6 +76,7 @@ interface UseClassesReturn {
 }
 
 export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn => {
+    const router = useRouter();
     const {
         initialClasses = [],
         singleClassMode = false,
@@ -85,6 +87,11 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
     const [loading, setLoading] = useState(!initialClasses.length);
     const [error, setError] = useState<string | null>(null);
 
+    const redirectToLogin = useCallback(() => {
+        localStorage.removeItem('token');
+        router.push('/login');
+    }, [router]);
+
     const getToken = useCallback(() => {
         return localStorage.getItem('token') || '';
     }, []);
@@ -93,8 +100,9 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
         const token = getToken();
 
         if (!token) {
-            setError('No authentication token found. Please login.');
+            setError('الرجاء تسجيل الدخول');
             setLoading(false);
+            redirectToLogin();
             return;
         }
 
@@ -124,12 +132,18 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
             
         } catch (err: any) {
             console.error('🔥 [useClasses] Error:', err);
-            setError(err.message || 'A connection error occurred');
-            setClasses([]);
+            
+            // إذا كان الخطأ 401 (غير مصرح) أو رسالة فيها Unauthorized
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized') || err.status === 401) {
+                redirectToLogin();
+            } else {
+                setError(err.message || 'حدث خطأ في الاتصال');
+                setClasses([]);
+            }
         } finally {
             setLoading(false);
         }
-    }, [getToken, singleClassMode, classId]);
+    }, [getToken, singleClassMode, classId, redirectToLogin]);
 
     useEffect(() => {
         if (initialClasses.length > 0 && !classId) {
@@ -147,7 +161,8 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
     const handleCreateClass = useCallback(async (data: { name: string; comment?: string }) => {
         const token = getToken();
         if (!token) {
-            setError('No authentication token found');
+            setError('الرجاء تسجيل الدخول');
+            redirectToLogin();
             throw new Error('No token found');
         }
 
@@ -160,17 +175,21 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
             }
             return response;
         } catch (err: any) {
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                redirectToLogin();
+            }
             setError(err.message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, [getToken]);
+    }, [getToken, redirectToLogin]);
 
     const handleUpdateClass = useCallback(async (id: number, data: { name?: string; comment?: string }) => {
         const token = getToken();
         if (!token) {
-            setError('No authentication token found');
+            setError('الرجاء تسجيل الدخول');
+            redirectToLogin();
             throw new Error('No token found');
         }
 
@@ -183,17 +202,21 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
             }
             return response;
         } catch (err: any) {
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                redirectToLogin();
+            }
             setError(err.message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, [getToken]);
+    }, [getToken, redirectToLogin]);
 
     const handleDeleteClass = useCallback(async (id: number): Promise<void> => {
         const token = getToken();
         if (!token) {
-            setError('No authentication token found');
+            setError('الرجاء تسجيل الدخول');
+            redirectToLogin();
             throw new Error('No token found');
         }
 
@@ -205,12 +228,15 @@ export const useClasses = (options: UseClassesOptions = {}): UseClassesReturn =>
                 setClasses(prev => prev.filter(c => c.id !== id));
             }
         } catch (err: any) {
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                redirectToLogin();
+            }
             setError(err.message);
             throw err;
         } finally {
             setLoading(false);
         }
-    }, [getToken]);
+    }, [getToken, redirectToLogin]);
 
     return {
         classes,

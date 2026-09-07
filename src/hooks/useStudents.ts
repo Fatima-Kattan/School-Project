@@ -3,6 +3,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export interface Student {
     id: number;
@@ -223,6 +224,7 @@ interface UseStudentsReturn {
 }
 
 export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn => {
+    const router = useRouter();
     const {
         initialPage = 1,
         limit = 10,
@@ -242,9 +244,13 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     const [currentPage, setCurrentPage] = useState(initialPage);
     const [hasMore, setHasMore] = useState(false);
 
-    
     const isFetching = useRef(false);
     const isMounted = useRef(true);
+
+    const redirectToLogin = useCallback(() => {
+        localStorage.removeItem('token');
+        router.push('/login');
+    }, [router]);
 
     const getToken = useCallback(() => {
         if (typeof window !== 'undefined') {
@@ -256,7 +262,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     }, []);
 
     const fetchStudents = useCallback(async (page: number, isLoadMore = false) => {
-        
         if (isFetching.current) {
             console.log('⛔ جلب بيانات جاري بالفعل، تم تجاهل الطلب');
             return;
@@ -266,9 +271,10 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         const token = getToken();
 
         if (!token) {
-            setError('لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول.');
+            setError('الرجاء تسجيل الدخول');
             setLoading(false);
             isFetching.current = false;
+            redirectToLogin();
             return;
         }
 
@@ -276,7 +282,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
             setLoading(true);
             setError(null);
 
-            
             if (singleStudentMode && studentId) {
                 console.log('📤 [useStudents] Fetching single student:', studentId);
                 const response = await getStudent(studentId, token);
@@ -292,7 +297,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
                 return;
             }
 
-            
             if (classId) {
                 console.log('📤 [useStudents] Fetching students by class:', classId);
                 const response = await getStudentsByClass(classId, token);
@@ -311,7 +315,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
                 return;
             }
 
-            
             if (sectionId) {
                 console.log('📤 [useStudents] Fetching students by section:', sectionId);
                 const response = await getStudentsBySection(sectionId, token);
@@ -330,7 +333,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
                 return;
             }
 
-            
             if (searchKeyword) {
                 console.log('🔍 [useStudents] Searching students:', searchKeyword);
                 const response = await searchStudents(searchKeyword, token);
@@ -366,15 +368,19 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
             
         } catch (err: any) {
             console.error('🔥 [useStudents] Error:', err);
-            setError(err.message || 'A connection error occurred');
-            setStudents([]);
+            
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized') || err.status === 401) {
+                redirectToLogin();
+            } else {
+                setError(err.message || 'حدث خطأ في الاتصال');
+                setStudents([]);
+            }
         } finally {
             setLoading(false);
             isFetching.current = false;
         }
-    }, [getToken, singleStudentMode, studentId, classId, sectionId, searchKeyword, filters]);
+    }, [getToken, redirectToLogin, singleStudentMode, studentId, classId, sectionId, searchKeyword, filters]);
 
-    
     useEffect(() => {
         if (initialStudents.length > 0 && !classId && !sectionId && !searchKeyword && !studentId) {
             console.log('📦 [useStudents] Using initial students:', initialStudents.length);
@@ -382,7 +388,6 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
             setLoading(false);
             setHasMore(false);
         } else {
-            
             const timer = setTimeout(() => {
                 fetchStudents(1, false);
             }, 200);
