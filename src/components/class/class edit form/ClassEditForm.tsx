@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/shared/button/button';
 import { useClasses } from '@/hooks/useClasses';
+import { Save } from 'lucide-react';
 
 interface ClassEditFormProps {
     classData: {
@@ -91,13 +92,16 @@ export const ClassEditForm = ({ classData, onSuccess, onCancel }: ClassEditFormP
                     إلغاء
                 </Button>
                 <Button
-                    type="submit"
-                    variant="primary"
-                    isLoading={isLoading}
-                    size="md"
-                >
-                    تحديث
-                </Button>
+                                    variant="primary"
+                                    type="submit"
+                                    
+                                    size="md"
+                                    className="h-[40px] rounded-[12px]"
+                                    minWidth="160px"
+                                    leftIcon={<Save size={18} />}
+                                >
+                                    تحديث البيانات
+                                </Button>
             </div>
         </form>
     );
