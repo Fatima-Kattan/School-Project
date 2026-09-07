@@ -46,12 +46,12 @@ export const StudentEditForm = ({
         return sections.filter(section => section.class_id === formData.class_id);
     }, [sections, formData.class_id]);
 
-    // تعبئة الحقول بالبيانات القديمة
+    
     useEffect(() => {
         if (student) {
             console.log('📝 [StudentEditForm] Student data received:', student);
 
-            // محاولة استخراج الـ IDs من مصادر مختلفة
+            
             let classId = 0;
             let sectionId = 0;
             let parentId = 0;
