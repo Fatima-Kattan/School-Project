@@ -181,7 +181,7 @@ export default function SectionDetailsPage() {
                             title="لا توجد اختبارات"
                             description="قم بإضافة اختبار لهذه الشعبة الآن"
                             buttonText="إضافة اختبار"
-                            onButtonClick={() => router.push(`/sections/${section.id}/exams/create`)}
+                            onButtonClick={() => router.push(`/sections/${section.id}/exams`)}
                             icon={<ClipboardList size={32} />}
                         />
                     </div>
