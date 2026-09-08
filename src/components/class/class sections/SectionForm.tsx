@@ -6,8 +6,8 @@ import { Save } from 'lucide-react';
 import { Input } from '@/components/shared/input/inpute';
 import { Textarea } from '@/components/shared/input/Textarea';
 import { Button } from '@/components/shared/button/button';
-import { addSectionToClass } from '@/services/api/classes/addSectionToClass';
-import { updateSectionToClass } from '@/services/api/classes/updateSectionToClass';
+import { addSectionToClass } from '@/services/api/sections/addSectionToClass';
+import { updateSectionToClass } from '@/services/api/sections/updateSectionToClass';
 
 interface SectionFormProps {
     mode: 'create' | 'edit';

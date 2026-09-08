@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Trash } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
-import { useClasses } from '@/hooks/useClasses';
+import { useSections } from '@/hooks/useSections';
 
 interface ClassDeleteFormProps {
     classData: {
@@ -22,7 +22,7 @@ export const ClassDeleteForm = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const { deleteClass } = useClasses({});
+    const { deleteClass } = useSections({});
 
     const handleDelete = async () => {
         setLoading(true);

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ClassDetails from '@/components/class/class details/ClassDetails';
+import { getClass } from '@/services/api/classes/getClass';
 
 export default function ClassDetailPage() {
     const params = useParams();
@@ -15,7 +16,7 @@ export default function ClassDetailPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // ✅ جلب التوكن من localStorage (يعمل في Client Component)
+                // ✅ جلب التوكن من localStorage
                 const token = localStorage.getItem('token') ||
                                 localStorage.getItem('auth_token') ||
                                 localStorage.getItem('access_token');
@@ -30,49 +31,17 @@ export default function ClassDetailPage() {
 
                 console.log(`📌 Fetching class ${params.id}...`);
 
-                // جلب بيانات الصف
-                const response = await fetch(
-                    `http://localhost:8000/api/dashboard/classes/${params.id}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                    }
-                );
-
-                console.log('📥 Response status:', response.status);
-
-                // إذا كان 401 → غير مصرح
-                if (response.status === 401) {
-                    console.log('❌ Unauthorized, redirecting to login');
-                    router.push('/login');
-                    return;
-                }
-
-                // إذا كان 404 → الصف غير موجود
-                if (response.status === 404) {
-                    setError('الصف غير موجود');
-                    setLoading(false);
-                    return;
-                }
-
-                // إذا كان خطأ آخر
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('📦 Data received:', data);
+                // ✅ استخدام service بدلاً من fetch المباشر
+                const response = await getClass(Number(params.id), token);
+                
+                console.log('📦 Data received:', response);
 
                 // التحقق من صحة البيانات
-                if (!data.success || !data.data) {
-                    throw new Error(data.message || 'Class not found');
+                if (!response.success || !response.data) {
+                    throw new Error(response.message || 'Class not found');
                 }
 
-                const { class: classData, statistics } = data.data;
+                const { class: classData, statistics } = response.data;
 
                 // تحويل البيانات للشكل المطلوب
                 const formattedData = {
@@ -97,7 +66,18 @@ export default function ClassDetailPage() {
 
             } catch (err: any) {
                 console.error('❌ Error:', err);
-                setError(err.message || 'حدث خطأ');
+                
+                // ✅ معالجة الأخطاء بشكل أفضل
+                if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                    router.push('/login');
+                    return;
+                }
+                
+                if (err.message?.includes('404')) {
+                    setError('الصف غير موجود');
+                } else {
+                    setError(err.message || 'حدث خطأ');
+                }
             } finally {
                 setLoading(false);
             }
