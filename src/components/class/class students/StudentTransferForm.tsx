@@ -10,6 +10,7 @@ interface StudentTransferFormProps {
     student: {
         id: number;
         full_name: string;
+        class_name?: string; 
     };
     sectionId: number;
     onSuccess: () => void;
@@ -33,8 +34,9 @@ export function StudentTransferForm({
     const [sections, setSections] = useState<Section[]>([]);
     const [selectedSectionId, setSelectedSectionId] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
+    const [studentClass, setStudentClass] = useState<string>(student.class_name || '');
 
-    // ✅ جلب الشعب المتاحة
+    
     useEffect(() => {
         const fetchSections = async () => {
             setLoadingSections(true);
@@ -58,6 +60,10 @@ export function StudentTransferForm({
                 const result = await response.json();
                 if (result.success) {
                     setSections(result.data);
+                    
+                    if (result.data.length > 0 && result.data[0].class_name) {
+                        setStudentClass(result.data[0].class_name);
+                    }
                 }
             } catch (error: any) {
                 console.error('Error fetching sections:', error);
@@ -70,7 +76,7 @@ export function StudentTransferForm({
         fetchSections();
     }, [student.id]);
 
-    // ✅ نقل الطالب
+    
     const handleTransfer = async () => {
         if (!selectedSectionId) {
             setError('الرجاء اختيار الشعبة الجديدة');
@@ -111,7 +117,7 @@ export function StudentTransferForm({
 
     return (
         <div>
-            {/* زر الإغلاق */}
+            
             <button
                 onClick={onCancel}
                 style={{
@@ -133,12 +139,11 @@ export function StudentTransferForm({
                 نقل طالب إلى شعبة أخرى
             </h2>
 
-            <p className="text-center text-gray-700 mb-6">
-                اختر الشعبة الجديدة لنقل الطالب{' '}
-                <span className="font-bold text-[#007353]">{student.full_name}</span>
-            </p>
+            
 
-            {/* حقل اختيار الشعبة */}
+            
+
+            
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
                     الشعبة الجديدة <span className="text-red-500">(مطلوب)</span>
@@ -153,8 +158,9 @@ export function StudentTransferForm({
                         ⚠️ {error}
                     </div>
                 ) : sections.length === 0 ? (
-                    <div className="text-center text-gray-500 text-sm py-4 bg-gray-50 rounded-[12px]">
-                        لا توجد شعب متاحة لنقل الطالب إليها
+                    <div className="text-center text-gray-500 text-sm py-4 bg-gray-50 rounded-[12px] border border-[#E0E0E0]">
+                        <p className="font-medium">لا توجد شعب متاحة</p>
+                        <p className="text-xs mt-1">لا يوجد شعب أخرى في نفس الصف لنقل الطالب إليها</p>
                     </div>
                 ) : (
                     <select
@@ -173,21 +179,28 @@ export function StudentTransferForm({
                         <option value={0}>اختر الشعبة</option>
                         {sections.map((section) => (
                             <option key={section.id} value={section.id}>
-                                {section.class_name} - {section.name}
+                                {section.name}
                             </option>
                         ))}
                     </select>
                 )}
+                
+                
+                {!loadingSections && sections.length > 0 && (
+                    <p className="text-xs text-gray-400 text-right mt-1">
+                        عدد الشعب المتاحة: {sections.length}
+                    </p>
+                )}
             </div>
 
-            {/* رسالة الخطأ */}
+            
             {error && (
                 <div className="mb-4 text-sm text-red-600 text-right bg-red-50 p-2 rounded-[8px]">
                     ⚠️ {error}
                 </div>
             )}
 
-            {/* أزرار الإجراءات */}
+            
             <div className="flex justify-end gap-3">
                 <Button
                     variant="ghost-outline"
@@ -202,7 +215,7 @@ export function StudentTransferForm({
                     variant="primary"
                     onClick={handleTransfer}
                     isLoading={loading}
-                    disabled={!selectedSectionId || loadingSections}
+                    disabled={!selectedSectionId || loadingSections || sections.length === 0}
                     size="md"
                     className="h-[40px] rounded-[12px] bg-[#007353] hover:bg-[#005f42] text-white"
                     minWidth="160px"

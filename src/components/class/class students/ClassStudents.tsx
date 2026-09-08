@@ -11,6 +11,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { StudentEditForm } from '@/components/student/student edit form/StudentEditForm';
 import { StudentAddForm } from '@/components/class/class students/StudentAddForm';
 import { StudentTransferForm } from '@/components/class/class students/StudentTransferForm';
+import { StudentDeleteForm } from '@/components/student/student delete form/StudentDeleteForm';
 
 interface ClassStudentsProps {
     classId: string;
@@ -30,23 +31,24 @@ export default function ClassStudents({
     const [showTransferDialog, setShowTransferDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showAddDialog, setShowAddDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
     const { students, loading: studentsLoading, refreshStudents } = useStudents({
         sectionId: sectionId || undefined,
     });
 
-    // ✅ الاستماع للحدث
+    
     useEffect(() => {
         console.log('🎯 [ClassStudents] Component mounted, sectionId:', sectionId);
-        
+
         const handleOpenAddDialog = () => {
             console.log('🎯 [ClassStudents] Event received! Opening dialog...');
             setShowAddDialog(true);
         };
-        
+
         window.addEventListener('openAddStudentDialog', handleOpenAddDialog);
-        
+
         return () => {
             console.log('🎯 [ClassStudents] Component unmounted, removing listener');
             window.removeEventListener('openAddStudentDialog', handleOpenAddDialog);
@@ -75,7 +77,7 @@ export default function ClassStudents({
         refreshStudents();
     };
 
-    // ✅ فتح نافذة نقل الطالب
+    
     const openTransferDialog = (student: any) => {
         setSelectedStudent(student);
         setShowTransferDialog(true);
@@ -88,6 +90,23 @@ export default function ClassStudents({
 
     const handleTransferSuccess = () => {
         setShowTransferDialog(false);
+        setSelectedStudent(null);
+        refreshStudents();
+    };
+
+    
+    const openDeleteDialog = (student: any) => {
+        setSelectedStudent(student);
+        setShowDeleteDialog(true);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setSelectedStudent(null);
+    };
+
+    const handleDeleteSuccess = () => {
+        setShowDeleteDialog(false);
         setSelectedStudent(null);
         refreshStudents();
     };
@@ -149,10 +168,10 @@ export default function ClassStudents({
                 </div>
             )
         },
-        { 
-            key: 'birth_date', 
-            header: 'تاريخ الميلاد', 
-            align: 'center', 
+        {
+            key: 'birth_date',
+            header: 'تاريخ الميلاد',
+            align: 'center',
             width: 110,
             render: (row) => {
                 if (!row.birth_date) return '-';
@@ -194,8 +213,8 @@ export default function ClassStudents({
             },
         },
         {
-            label: 'نقل إلى شعبة', // ✅ تغيير إلى نقل
-            icon: <Repeat size={16} />, // ✅ أيقونة نقل
+            label: 'نقل إلى شعبة',
+            icon: <Repeat size={16} />,
             variant: 'primary',
             onClick: (row) => {
                 openTransferDialog(row);
@@ -228,7 +247,7 @@ export default function ClassStudents({
 
     return (
         <div className="w-full">
-            {/* ✅ نافذة إضافة طالب */}
+            
             {showAddDialog && sectionId && (
                 <div
                     style={{
@@ -262,14 +281,15 @@ export default function ClassStudents({
                     >
                         <StudentAddForm
                             sectionId={sectionId}
+                            classId={Number(classId)}
                             onSuccess={handleFormSuccess}
                             onCancel={closeFormDialog}
-                        />
+                        /> []
                     </div>
                 </div>
             )}
 
-            {/* ✅ نافذة نقل الطالب */}
+            
             {showTransferDialog && selectedStudent && (
                 <div
                     style={{
@@ -311,7 +331,7 @@ export default function ClassStudents({
                 </div>
             )}
 
-            {/* ✅ نافذة تعديل الطالب */}
+            
             {showEditDialog && selectedStudent && (
                 <div
                     style={{
@@ -360,8 +380,8 @@ export default function ClassStudents({
                             ✕
                         </button>
 
-                        <h2 style={{ 
-                            fontSize: '22px', 
+                        <h2 style={{
+                            fontSize: '22px',
                             fontWeight: 'bold',
                             marginBottom: '24px',
                             color: '#1a1a1a',
