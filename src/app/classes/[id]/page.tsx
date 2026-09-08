@@ -1,4 +1,5 @@
 // src/app/classes/[id]/page.tsx
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -12,9 +13,8 @@ export default function ClassDetailPage() {
     const [classData, setClassData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ مفتاح التحديث
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // ✅ دالة جلب البيانات مع إمكانية إعادة الاستدعاء
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -74,12 +74,10 @@ export default function ClassDetailPage() {
         }
     }, [params.id, router]);
 
-    // ✅ جلب البيانات عند تحميل الصفحة وعند تغيير refreshTrigger
     useEffect(() => {
         fetchData();
     }, [fetchData, refreshTrigger]);
 
-    // ✅ دالة لتحديث البيانات من الـ API
     const handleRefresh = useCallback(() => {
         setRefreshTrigger(prev => prev + 1);
     }, []);
@@ -130,7 +128,7 @@ export default function ClassDetailPage() {
 
     return (
         <ClassDetails 
-            key={refreshTrigger} // ✅ إعادة إنشاء المكون عند التحديث
+            key={refreshTrigger}
             classData={classData} 
             onRefresh={handleRefresh} 
         />

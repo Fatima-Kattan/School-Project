@@ -1,14 +1,14 @@
 // src/components/class/class sections/ClassSections.tsx
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, SquarePen, Trash, X } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, SquarePen, Trash, X } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 import { SectionForm } from './SectionForm';
-import { SectionDeleteDialog } from './SectionDeleteDialog';
-import { SectionDeleteForm } from './SectionDeleteForm';
+import { Dialog } from '@/components/shared/dialog/dialog';
 
 interface ClassSectionsProps {
     classId: string;
@@ -18,22 +18,10 @@ interface ClassSectionsProps {
         name: string;
         comment: string | null;
         teachers_count: number;
-        total_students?: number;
-        students_count?: number;
-        statistics?: {
-            students_count: number;
-        };
-        students?: Array<{
-            id: number;
-            user?: {
-                full_name: string;
-            };
-            full_name?: string;
-        }>;
     }>;
     onSectionClick?: (sectionId: number) => void;
-    onSectionChanged?: (type?: 'add' | 'edit' | 'delete', data?: any) => void;
-    onAddSection?: () => void;
+    onSectionChanged?: () => void;
+    onAddSection?: () => void; // ✅ إضافة prop جديد
 }
 
 export default function ClassSections({
@@ -42,82 +30,40 @@ export default function ClassSections({
     sections,
     onSectionClick,
     onSectionChanged,
-    onAddSection,
+    onAddSection, // ✅ استقبال الـ prop
 }: ClassSectionsProps) {
     const router = useRouter();
 
+    // ✅ حالات الديالوجات
     const [showFormDialog, setShowFormDialog] = useState(false);
-    const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [showStudentsDialog, setShowStudentsDialog] = useState(false);
     const [selectedSection, setSelectedSection] = useState<any>(null);
-    // ✅ متغير لتخزين البيانات المعدلة مؤقتاً
-    const [editedSectionData, setEditedSectionData] = useState<any>(null);
+    const [mode, setMode] = useState<'create' | 'edit'>('create');
 
+    // ✅ فتح نافذة إضافة شعبة
     const openAddDialog = () => {
+        setMode('create');
+        setSelectedSection(null);
         setShowFormDialog(true);
     };
 
+    // ✅ فتح نافذة تعديل شعبة
+    const openEditDialog = (section: any) => {
+        setMode('edit');
+        setSelectedSection(section);
+        setShowFormDialog(true);
+    };
+
+    // ✅ فتح نافذة حذف شعبة
+    const openDeleteDialog = (section: any) => {
+        setSelectedSection(section);
+        setShowDeleteDialog(true);
+    };
+
+    // ✅ إغلاق الديالوجات
     const closeFormDialog = () => {
         setShowFormDialog(false);
         setSelectedSection(null);
-        setEditedSectionData(null);
-    };
-
-    const openEditDialog = (section: any) => {
-        setSelectedSection(section);
-        setEditedSectionData(null); // ✅ reset
-        setShowEditDialog(true);
-    };
-
-    const closeEditDialog = () => {
-        setShowEditDialog(false);
-        setSelectedSection(null);
-        setEditedSectionData(null);
-    };
-
-    // ✅ معالج نجاح الفورم (إضافة أو تعديل)
-    const handleFormSuccess = (newSection?: any) => {
-        const wasEdit = showEditDialog;
-        const wasAdd = showFormDialog;
-        const currentSection = selectedSection;
-        
-        console.log('📝 [ClassSections] Form success:', { wasEdit, wasAdd, newSection, currentSection });
-        
-        // ✅ إذا كان تعديل والبيانات الجديدة موجودة
-        if (wasEdit && newSection) {
-            setEditedSectionData(newSection);
-            // ✅ نمرر البيانات المعدلة إلى الأب
-            if (onSectionChanged) {
-                onSectionChanged('edit', newSection);
-            }
-        } 
-        // ✅ إذا كان إضافة
-        else if (wasAdd && newSection) {
-            if (onSectionChanged) {
-                onSectionChanged('add', newSection);
-            }
-        }
-        
-        setShowFormDialog(false);
-        setShowEditDialog(false);
-        setSelectedSection(null);
-    };
-
-    const openDeleteDialog = (section: any) => {
-        setSelectedSection(section);
-        
-        const hasStudents = 
-            (section?.total_students || 0) > 0 ||
-            (section?.statistics?.students_count || 0) > 0 ||
-            (section?.students_count || 0) > 0 ||
-            (section?.students && section.students.length > 0);
-        
-        if (hasStudents) {
-            setShowStudentsDialog(true);
-        } else {
-            setShowDeleteDialog(true);
-        }
     };
 
     const closeDeleteDialog = () => {
@@ -125,32 +71,82 @@ export default function ClassSections({
         setSelectedSection(null);
     };
 
-    const closeStudentsDialog = () => {
-        setShowStudentsDialog(false);
+    // ✅ معالج نجاح النموذج (إضافة/تعديل)
+    const handleFormSuccess = () => {
+        setShowFormDialog(false);
         setSelectedSection(null);
-    };
-
-    const handleDeleteSuccess = () => {
-        const deletedId = selectedSection?.id;
-        console.log('✅ [ClassSections] Section deleted successfully! ID:', deletedId);
-        
-        setShowDeleteDialog(false);
-        setSelectedSection(null);
-        
-        if (onSectionChanged && deletedId) {
-            onSectionChanged('delete', deletedId);
+        if (onSectionChanged) {
+            onSectionChanged();
+        } else {
+            window.location.reload();
         }
     };
 
-    const getStudentsCount = (section: any): number => {
-        if (!section) return 0;
-        return section.total_students || 
-               section.statistics?.students_count || 
-               section.students_count || 
-               section.students?.length || 
-               0;
+    // ✅ معالج نجاح الحذف
+    const handleDeleteSuccess = () => {
+        setShowDeleteDialog(false);
+        setSelectedSection(null);
+        if (onSectionChanged) {
+            onSectionChanged();
+        } else {
+            window.location.reload();
+        }
     };
 
+    // ✅ دالة إضافة شعبة (للزر)
+    const handleAddSection = () => {
+        if (onAddSection) {
+            onAddSection(); // ✅ استدعاء الـ prop من الأب
+        } else {
+            openAddDialog(); // ✅ الفتح المحلي كاحتياطي
+        }
+    };
+
+    // ✅ إذا لم توجد شعب → عرض رسالة "لا شعب مضافين بعد"
+    if (!sections || sections.length === 0) {
+        return (
+            <>
+                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                            لا شعب مضافين بعد
+                        </h3>
+                        <p className="text-gray-500 text-center mb-6">
+                            قم بإضافة شعب وتابعهم الآن من هنا
+                        </p>
+                        <Button
+                            variant="primary"
+                            onClick={handleAddSection}
+                            leftIcon={<Plus size={16} />}
+                            size="md"
+                            className="px-5 py-2.5 shadow-sm"
+                        >
+                            إضافة شعبة
+                        </Button>
+                    </div>
+                </div>
+
+                <Dialog
+                    isOpen={showFormDialog}
+                    onClose={closeFormDialog}
+                    maxWidth="lg"
+                    showCancel={false}
+                    showConfirm={false}
+                    hideCloseButton={false}
+                >
+                    <SectionForm
+                        mode="create"
+                        classId={parseInt(classId)}
+                        initialData={null}
+                        onSuccess={handleFormSuccess}
+                        onCancel={closeFormDialog}
+                    />
+                </Dialog>
+            </>
+        );
+    }
+
+    // ✅ تعريف الأعمدة
     const columns: Column<any>[] = [
         {
             key: 'name',
@@ -162,18 +158,13 @@ export default function ClassSections({
             ),
         },
         {
-            key: 'students_count',
+            key: 'teachers_count',
             header: 'عدد الطلاب',
             align: 'center',
             width: 130,
-            render: (row) => {
-                const count = getStudentsCount(row);
-                return (
-                    <span className="font-medium">
-                        {count}
-                    </span>
-                );
-            },
+            render: (row) => (
+                <span className="font-medium">{row.teachers_count || 0}</span>
+            ),
         },
         {
             key: 'comment',
@@ -185,6 +176,7 @@ export default function ClassSections({
         },
     ];
 
+    // ✅ تعريف الأزرار (Actions)
     const actions: TableAction<any>[] = [
         {
             label: 'عرض',
@@ -206,236 +198,42 @@ export default function ClassSections({
         },
     ];
 
-    const isEmpty = !sections || sections.length === 0;
-
     return (
-        <div className="w-full">
-            {/* ====== Add Form Dialog ====== */}
-            {showFormDialog && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 999999,
-                        padding: '20px',
-                    }}
-                    onClick={closeFormDialog}
-                >
-                    <div
-                        style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '30px',
-                            maxWidth: '600px',
-                            width: '100%',
-                            maxHeight: 'auto',
-                            overflow: 'visible',
-                            position: 'relative',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="relative">
-                            <button
-                                type="button"
-                                onClick={closeFormDialog}
-                                className="absolute top-0 left-0 p-2 hover:bg-gray-100 rounded-full transition-colors z-10 cursor-pointer"
-                            >
-                                <X size={24} className="text-gray-500" />
-                            </button>
-                            <h2 className="text-xl font-bold text-right mb-4">
-                                إضافة شعبة
-                            </h2>
-                        </div>
+        <>
+            <Dialog
+                isOpen={showFormDialog}
+                onClose={closeFormDialog}
+                maxWidth="lg"
+                showCancel={false}
+                showConfirm={false}
+                hideCloseButton={false}
+            >
+                <SectionForm
+                    mode={mode}
+                    classId={parseInt(classId)}
+                    initialData={mode === 'edit' ? selectedSection : null}
+                    onSuccess={handleFormSuccess}
+                    onCancel={closeFormDialog}
+                />
+            </Dialog>
 
-                        <SectionForm
-                            mode="create"
-                            classId={parseInt(classId)}
-                            initialData={null}
-                            onSuccess={(newSection) => {
-                                handleFormSuccess(newSection);
-                            }}
-                            onCancel={closeFormDialog}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* ====== Edit Form Dialog ====== */}
-            {showEditDialog && selectedSection && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 999999,
-                        padding: '20px',
-                    }}
-                    onClick={closeEditDialog}
-                >
-                    <div
-                        style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '30px',
-                            maxWidth: '600px',
-                            width: '100%',
-                            maxHeight: 'auto',
-                            overflow: 'visible',
-                            position: 'relative',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="relative">
-                            <button
-                                type="button"
-                                onClick={closeEditDialog}
-                                className="absolute top-0 left-0 p-2 hover:bg-gray-100 rounded-full transition-colors z-10 cursor-pointer"
-                            >
-                                <X size={24} className="text-gray-500" />
-                            </button>
-                            <h2 className="text-xl font-bold text-right mb-4">
-                                تعديل شعبة
-                            </h2>
-                        </div>
-
-                        <SectionForm
-                            mode="edit"
-                            classId={parseInt(classId)}
-                            initialData={selectedSection}
-                            onSuccess={(updatedSection) => {
-                                // ✅ تمرير البيانات المعدلة
-                                console.log('📝 [ClassSections] Edit success, updatedSection:', updatedSection);
-                                handleFormSuccess(updatedSection);
-                            }}
-                            onCancel={closeEditDialog}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* ====== Delete Form (عند عدم وجود طلاب) ====== */}
-            {showDeleteDialog && selectedSection && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 999999,
-                        padding: '20px',
-                    }}
-                    onClick={closeDeleteDialog}
-                >
-                    <div
-                        style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '30px',
-                            maxWidth: '512px',
-                            width: '100%',
-                            maxHeight: 'auto',
-                            overflow: 'visible',
-                            position: 'relative',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="relative">
-                            <button
-                                type="button"
-                                onClick={closeDeleteDialog}
-                                className="absolute top-0 left-0 p-2 hover:bg-red-50 active:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 rounded-full transition-colors z-10 cursor-pointer"
-                            >
-                                <X size={24} className="text-gray-500" />
-                            </button>
-                        </div>
-
-                        <SectionDeleteForm
-                            sectionData={{
-                                id: selectedSection.id,
-                                name: selectedSection.name,
-                                class_name: className,
-                            }}
-                            onSuccess={handleDeleteSuccess}
-                            onCancel={closeDeleteDialog}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* ====== Delete Dialog (عند وجود طلاب - تحذيري) ====== */}
-            <SectionDeleteDialog
-                isOpen={showStudentsDialog}
-                sectionData={{
-                    id: selectedSection?.id,
-                    name: selectedSection?.name,
-                    total_students: getStudentsCount(selectedSection),
-                    statistics: selectedSection?.statistics,
-                    students: selectedSection?.students,
-                }}
-                onClose={closeStudentsDialog}
-            />
-
-            {/* ====== Main Content ====== */}
-            {isEmpty ? (
-                <div className="flex flex-col items-center justify-center bg-white rounded-xl shadow-sm p-12 min-h-[500px] border border-[#E0E0E0]">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <span className="text-3xl">📚</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        لا شعب مضافين بعد
-                    </h3>
-                    <p className="text-gray-500 text-center mb-6">
-                        قم بإضافة الشعب وتابعهم الآن من هنا
-                    </p>
-                    <Button
-                        variant="primary"
-                        onClick={openAddDialog}
-                        leftIcon={<Plus size={16} />}
-                        size="md"
-                        className="px-5 py-2.5 shadow-sm"
-                    >
-                        إضافة شعبة
-                    </Button>
-                </div>
-            ) : (
-                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
-                    <Table
-                        columns={columns}
-                        data={sections}
-                        keyExtractor={(row) => row.id}
-                        actions={actions}
-                        headerBgColor="#F9FCFB"
-                        rowBgColor="#FFFFFF"
-                        borderColor="#E0E0E0"
-                        radius={10}
-                        hoverable={true}
-                        className="w-full"
-                        headerTextColor="#47524F"
-                        headerFontWeight={600}
-                    />
-                </div>
-            )}
-        </div>
+            {/* ✅ الجدول */}
+            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
+                <Table
+                    columns={columns}
+                    data={sections}
+                    keyExtractor={(row) => row.id}
+                    actions={actions}
+                    headerBgColor="#F9FCFB"
+                    rowBgColor="#FFFFFF"
+                    borderColor="#E0E0E0"
+                    radius={10}
+                    hoverable={true}
+                    className="w-full"
+                    headerTextColor="#47524F"
+                    headerFontWeight={600}
+                />
+            </div>
+        </>
     );
 }
