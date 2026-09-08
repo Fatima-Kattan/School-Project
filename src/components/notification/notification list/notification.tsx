@@ -3,12 +3,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // ✅ استيراد useRouter
 import { Breadcrumb } from '@/components/shared/breadcrumb/breadcrumb';
 import { Empty } from '@/components/shared/empty/empty';
 import { Plus, SquarePen, User, Users, Clock, Calendar, Trash, X } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { NotificationForm } from '@/components/notification/notification form/notificationForm';
-import { NotificationDelete } from '@/components/notification/notifiction delete/notificationDelete'; // ✅ استيراد مكون الحذف
+import { NotificationDelete } from '@/components/notification/notifiction delete/notificationDelete';
 
 interface Notification {
     id: number;
@@ -19,14 +20,44 @@ interface Notification {
 }
 
 function NotificationPage() {
+    const router = useRouter(); // ✅ استخدام router للتوجيه
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // ✅ حالة التحقق
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
-    const [deletingNotification, setDeletingNotification] = useState<Notification | null>(null); // ✅ للحذف
+    const [deletingNotification, setDeletingNotification] = useState<Notification | null>(null);
 
     const breadcrumbItems = [{ label: 'الإعلانات' }];
+
+    // ✅ التحقق من المصادقة عند تحميل الصفحة
+    useEffect(() => {
+        const checkAuth = () => {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // التحقق من وجود التوكن
+                if (!token || token.length <= 10) {
+                    console.warn('⚠️ No valid token found, redirecting to login...');
+                    setIsAuthenticated(false);
+                    router.push('/login');
+                    return;
+                }
+
+                // التوكن موجود
+                setIsAuthenticated(true);
+                console.log('✅ User is authenticated');
+                
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                setIsAuthenticated(false);
+                router.push('/login');
+            }
+        };
+
+        checkAuth();
+    }, [router]);
 
     // 🔑 دالة جلب التوكن
     const getToken = (): string => {
@@ -81,6 +112,9 @@ function NotificationPage() {
             if (response.status === 401) {
                 const errorText = await response.text();
                 console.log('❌ 401 Error:', errorText);
+                // ✅ إذا كان التوكن غير صالح، احذفه ووجه لتسجيل الدخول
+                localStorage.removeItem('token');
+                router.push('/login');
                 throw new Error('جلسة غير صالحة - الرجاء تسجيل الدخول مرة أخرى');
             }
 
@@ -105,10 +139,12 @@ function NotificationPage() {
         }
     };
 
-    // تحميل البيانات
+    // تحميل البيانات فقط إذا كان المستخدم مسجل دخول
     useEffect(() => {
-        loadNotifications();
-    }, []);
+        if (isAuthenticated) {
+            loadNotifications();
+        }
+    }, [isAuthenticated]);
 
     // ✅ فتح مودال الإضافة
     const handleAddClick = () => {
@@ -138,64 +174,19 @@ function NotificationPage() {
         setDeletingNotification(null);
     };
 
-    // ✅ حذف إعلان
-    const handleDelete = async (id: number) => {
-        if (!confirm('🗑️ هل أنت متأكد من حذف هذا الإعلان؟')) return;
-
-        try {
-            const token = getToken();
-            if (!token) {
-                alert('❌ لم يتم العثور على التوكن. الرجاء تسجيل الدخول');
-                return;
-            }
-
-            const response = await fetch(
-                `http://localhost:8000/api/notifications/${id}`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (response.status === 401) {
-                throw new Error('جلسة غير صالحة - الرجاء تسجيل الدخول مرة أخرى');
-            }
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || `HTTP ${response.status}`);
-            }
-
-            if (result.status === 'success') {
-                alert('✅ تم حذف الإعلان بنجاح');
-                loadNotifications(); // تحديث القائمة
-            } else {
-                throw new Error(result.message || 'فشل الحذف');
-            }
-        } catch (err: any) {
-            console.error('❌ Delete error:', err);
-            alert(`❌ فشل الحذف: ${err.message}`);
-        }
-    };
-
     // ✅ عند نجاح الحفظ
     const handleFormSuccess = () => {
         console.log('✅ [NotificationPage] Notification saved successfully!');
         setIsModalOpen(false);
         setEditingNotification(null);
-        loadNotifications(); // تحديث القائمة
+        loadNotifications();
     };
 
     // ✅ عند نجاح الحذف
     const handleDeleteSuccess = () => {
         console.log('✅ [NotificationPage] Notification deleted successfully!');
         setDeletingNotification(null);
-        loadNotifications(); // تحديث القائمة
+        loadNotifications();
     };
 
     // ✅ عند إلغاء النموذج
@@ -239,6 +230,26 @@ function NotificationPage() {
         }
     };
 
+    // ✅ عرض شاشة تحميل أثناء التحقق من المصادقة
+    if (isAuthenticated === null) {
+        return (
+            <main className="min-h-screen" style={{ backgroundColor: '#F7F7F7' }}>
+                <div className="flex justify-center items-center h-screen">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#007353] mx-auto"></div>
+                        <p className="mt-4 text-gray-600">جاري التحقق من صلاحياتك...</p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // ✅ إذا لم يكن مسجل دخول، لا تعرض أي شيء (سيتم التوجيه تلقائياً)
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    // ✅ باقي الكود كما هو
     if (loading) {
         return (
             <main className="min-h-screen" style={{ backgroundColor: '#F7F7F7' }}>
@@ -318,10 +329,9 @@ function NotificationPage() {
                                                 {formatTime(notification.created_at)}
                                             </span>
                                         </div>
-                                        {/* ✅ أزرار التعديل والحذف */}
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => handleDeleteClick(notification)} // ✅ فتح مودال الحذف
+                                                onClick={() => handleDeleteClick(notification)}
                                                 className="flex items-center justify-center w-9 h-9 rounded-xl transition-colors duration-200"
                                                 style={{
                                                     backgroundColor: '#F7F7F7',
@@ -365,7 +375,7 @@ function NotificationPage() {
                 </div>
             </div>
 
-            {/* ✅ مودال الإضافة والتعديل */}
+            {/* مودال الإضافة والتعديل */}
             {isModalOpen && (
                 <div
                     style={{
@@ -397,7 +407,6 @@ function NotificationPage() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* زر الإغلاق */}
                         <button
                             onClick={handleCloseModal}
                             style={{
@@ -422,7 +431,7 @@ function NotificationPage() {
                             color: '#1a1a1a',
                             textAlign: 'right',
                         }}>
-                            {editingNotification ? 'تعديل إعلان' : 'إضافة إعلان '}
+                            {editingNotification ? 'تعديل إعلان' : 'إضافة إعلان'}
                         </h2>
 
                         <div style={{
@@ -439,7 +448,7 @@ function NotificationPage() {
                 </div>
             )}
 
-            {/* ✅ مودال حذف الإعلان */}
+            {/* مودال حذف الإعلان */}
             {deletingNotification && (
                 <div
                     style={{
@@ -471,7 +480,6 @@ function NotificationPage() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* زر الإغلاق */}
                         <button
                             onClick={() => setDeletingNotification(null)}
                             style={{
