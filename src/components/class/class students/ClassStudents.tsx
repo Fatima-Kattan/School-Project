@@ -34,13 +34,22 @@ export default function ClassStudents({
         sectionId: sectionId || undefined,
     });
 
+    // ✅ الاستماع للحدث
     useEffect(() => {
+        console.log('🎯 [ClassStudents] Component mounted, sectionId:', sectionId);
+        
         const handleOpenAddDialog = () => {
+            console.log('🎯 [ClassStudents] Event received! Opening dialog...');
             setShowAddDialog(true);
         };
+        
         window.addEventListener('openAddStudentDialog', handleOpenAddDialog);
-        return () => window.removeEventListener('openAddStudentDialog', handleOpenAddDialog);
-    }, []);
+        
+        return () => {
+            console.log('🎯 [ClassStudents] Component unmounted, removing listener');
+            window.removeEventListener('openAddStudentDialog', handleOpenAddDialog);
+        };
+    }, [sectionId]);
 
     useEffect(() => {
         if (sectionId) {
@@ -96,70 +105,7 @@ export default function ClassStudents({
         refreshStudents();
     };
 
-    if (!sectionId) {
-        return (
-            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
-                <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                        <ArrowRight size={32} className="text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">اختر شعبة أولاً</h3>
-                    <p className="text-gray-500 mb-6">قم باختيار شعبة من تبويب الشعب لعرض الطلاب</p>
-                    <Button
-                        variant="primary"
-                        type="button"
-                        onClick={onBack}
-                        className="bg-[#007353] hover:bg-[#005f42] text-white rounded-[12px] px-6 py-2.5 flex items-center gap-2"
-                    >
-                        <ArrowRight size={18} />
-                        العودة إلى الشعب
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    if (studentsLoading) {
-        return (
-            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-10 bg-gray-200 rounded w-full"></div>
-                    <div className="space-y-2">
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                        <div className="h-8 bg-gray-200 rounded w-full"></div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (students.length === 0) {
-        return (
-            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
-                <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-20 h-20 rounded-full bg-[#E6F4F1] flex items-center justify-center mb-4">
-                        <Users size={32} className="text-[#007353]" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">لا طالب في هذه الشعبة</h3>
-                    <p className="text-gray-500 mb-6">قم بإضافة طالب لهذه الشعبة الآن</p>
-                    <Button
-                        variant="primary"
-                        type="button"
-                        onClick={openFormDialog}
-                        leftIcon={<Plus size={16} />}
-                        size="md"
-                        className="px-5 py-2.5 shadow-sm"
-                    >
-                        إضافة طالب
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
+    
     const columns: Column<any>[] = [
         {
             key: 'id',
@@ -254,6 +200,30 @@ export default function ClassStudents({
             },
         },
     ];
+
+    
+    if (!sectionId) {
+        return (
+            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <ArrowRight size={32} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">اختر شعبة أولاً</h3>
+                    <p className="text-gray-500 mb-6">قم باختيار شعبة من تبويب الشعب لعرض الطلاب</p>
+                    <Button
+                        variant="primary"
+                        type="button"
+                        onClick={onBack}
+                        className="bg-[#007353] hover:bg-[#005f42] text-white rounded-[12px] px-6 py-2.5 flex items-center gap-2"
+                    >
+                        <ArrowRight size={18} />
+                        العودة إلى الشعب
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full">
@@ -359,7 +329,7 @@ export default function ClassStudents({
                 </div>
             )}
 
-            
+            {/* ✅ نافذة تعديل الطالب */}
             {showEditDialog && selectedStudent && (
                 <div
                     style={{
@@ -431,22 +401,60 @@ export default function ClassStudents({
                 </div>
             )}
 
-            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
-                <Table
-                    columns={columns}
-                    data={students}
-                    keyExtractor={(row) => row.id}
-                    actions={actions}
-                    headerBgColor="#F9FCFB"
-                    rowBgColor="#FFFFFF"
-                    borderColor="#E0E0E0"
-                    radius={10}
-                    hoverable={true}
-                    className="w-full"
-                    headerTextColor="#47524F"
-                    headerFontWeight={600}
-                />
-            </div>
+            
+            {studentsLoading ? (
+                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-10 bg-gray-200 rounded w-full"></div>
+                        <div className="space-y-2">
+                            <div className="h-8 bg-gray-200 rounded w-full"></div>
+                            <div className="h-8 bg-gray-200 rounded w-full"></div>
+                            <div className="h-8 bg-gray-200 rounded w-full"></div>
+                            <div className="h-8 bg-gray-200 rounded w-full"></div>
+                            <div className="h-8 bg-gray-200 rounded w-full"></div>
+                        </div>
+                    </div>
+                </div>
+            ) : students.length === 0 ? (
+                
+                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="w-20 h-20 rounded-full bg-[#E6F4F1] flex items-center justify-center mb-4">
+                            <Users size={32} className="text-[#007353]" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">لا طالب في هذه الشعبة</h3>
+                        <p className="text-gray-500 mb-6">قم بإضافة طالب لهذه الشعبة الآن</p>
+                        <Button
+                            variant="primary"
+                            type="button"
+                            onClick={openFormDialog}
+                            leftIcon={<Plus size={16} />}
+                            size="md"
+                            className="px-5 py-2.5 shadow-sm"
+                        >
+                            إضافة طالب
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                
+                <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
+                    <Table
+                        columns={columns}
+                        data={students}
+                        keyExtractor={(row) => row.id}
+                        actions={actions}
+                        headerBgColor="#F9FCFB"
+                        rowBgColor="#FFFFFF"
+                        borderColor="#E0E0E0"
+                        radius={10}
+                        hoverable={true}
+                        className="w-full"
+                        headerTextColor="#47524F"
+                        headerFontWeight={600}
+                    />
+                </div>
+            )}
         </div>
     );
 }
