@@ -1,14 +1,17 @@
+// components/class/class students/ClassStudents.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Edit, Trash, ArrowRight, Users, X, Save, Plus } from 'lucide-react';
+import { Eye, Edit, ArrowRight, Users, Plus, Repeat } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 import { useStudents } from '@/hooks/useStudents';
-import { StudentDeleteForm } from '@/components/student/student delete form/StudentDeleteForm';
 import { StudentEditForm } from '@/components/student/student edit form/StudentEditForm';
 import { StudentAddForm } from '@/components/class/class students/StudentAddForm';
+import { StudentTransferForm } from '@/components/class/class students/StudentTransferForm';
+import { StudentDeleteForm } from '@/components/student/student delete form/StudentDeleteForm';
 
 interface ClassStudentsProps {
     classId: string;
@@ -25,26 +28,27 @@ export default function ClassStudents({
 }: ClassStudentsProps) {
     const router = useRouter();
 
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showTransferDialog, setShowTransferDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showAddDialog, setShowAddDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
     const { students, loading: studentsLoading, refreshStudents } = useStudents({
         sectionId: sectionId || undefined,
     });
 
-    // ✅ الاستماع للحدث
+    
     useEffect(() => {
         console.log('🎯 [ClassStudents] Component mounted, sectionId:', sectionId);
-        
+
         const handleOpenAddDialog = () => {
             console.log('🎯 [ClassStudents] Event received! Opening dialog...');
             setShowAddDialog(true);
         };
-        
+
         window.addEventListener('openAddStudentDialog', handleOpenAddDialog);
-        
+
         return () => {
             console.log('🎯 [ClassStudents] Component unmounted, removing listener');
             window.removeEventListener('openAddStudentDialog', handleOpenAddDialog);
@@ -73,6 +77,24 @@ export default function ClassStudents({
         refreshStudents();
     };
 
+    
+    const openTransferDialog = (student: any) => {
+        setSelectedStudent(student);
+        setShowTransferDialog(true);
+    };
+
+    const closeTransferDialog = () => {
+        setShowTransferDialog(false);
+        setSelectedStudent(null);
+    };
+
+    const handleTransferSuccess = () => {
+        setShowTransferDialog(false);
+        setSelectedStudent(null);
+        refreshStudents();
+    };
+
+    
     const openDeleteDialog = (student: any) => {
         setSelectedStudent(student);
         setShowDeleteDialog(true);
@@ -105,7 +127,6 @@ export default function ClassStudents({
         refreshStudents();
     };
 
-    
     const columns: Column<any>[] = [
         {
             key: 'id',
@@ -147,10 +168,10 @@ export default function ClassStudents({
                 </div>
             )
         },
-        { 
-            key: 'birth_date', 
-            header: 'تاريخ الميلاد', 
-            align: 'center', 
+        {
+            key: 'birth_date',
+            header: 'تاريخ الميلاد',
+            align: 'center',
             width: 110,
             render: (row) => {
                 if (!row.birth_date) return '-';
@@ -192,16 +213,15 @@ export default function ClassStudents({
             },
         },
         {
-            label: 'حذف',
-            icon: <Trash size={16} />,
-            variant: 'danger',
+            label: 'نقل إلى شعبة',
+            icon: <Repeat size={16} />,
+            variant: 'primary',
             onClick: (row) => {
-                openDeleteDialog(row);
+                openTransferDialog(row);
             },
         },
     ];
 
-    
     if (!sectionId) {
         return (
             <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
@@ -261,15 +281,16 @@ export default function ClassStudents({
                     >
                         <StudentAddForm
                             sectionId={sectionId}
+                            classId={Number(classId)}
                             onSuccess={handleFormSuccess}
                             onCancel={closeFormDialog}
-                        />
+                        /> []
                     </div>
                 </div>
             )}
 
             
-            {showDeleteDialog && selectedStudent && (
+            {showTransferDialog && selectedStudent && (
                 <div
                     style={{
                         position: 'fixed',
@@ -284,14 +305,14 @@ export default function ClassStudents({
                         zIndex: 999999,
                         padding: '20px',
                     }}
-                    onClick={closeDeleteDialog}
+                    onClick={closeTransferDialog}
                 >
                     <div
                         style={{
                             background: 'white',
                             borderRadius: '12px',
                             padding: '30px',
-                            maxWidth: '512px',
+                            maxWidth: '600px',
                             width: '100%',
                             maxHeight: 'auto',
                             overflow: 'visible',
@@ -300,36 +321,17 @@ export default function ClassStudents({
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <button
-                            onClick={closeDeleteDialog}
-                            style={{
-                                position: 'absolute',
-                                top: '15px',
-                                left: '20px',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '24px',
-                                cursor: 'pointer',
-                                color: '#999',
-                                zIndex: 10,
-                            }}
-                        >
-                            ✕
-                        </button>
-
-                        <StudentDeleteForm
-                            student={{
-                                id: selectedStudent.id,
-                                full_name: selectedStudent.full_name,
-                            }}
-                            onSuccess={handleDeleteSuccess}
-                            onCancel={closeDeleteDialog}
+                        <StudentTransferForm
+                            student={selectedStudent}
+                            sectionId={sectionId}
+                            onSuccess={handleTransferSuccess}
+                            onCancel={closeTransferDialog}
                         />
                     </div>
                 </div>
             )}
 
-            {/* ✅ نافذة تعديل الطالب */}
+            
             {showEditDialog && selectedStudent && (
                 <div
                     style={{
@@ -378,8 +380,8 @@ export default function ClassStudents({
                             ✕
                         </button>
 
-                        <h2 style={{ 
-                            fontSize: '22px', 
+                        <h2 style={{
+                            fontSize: '22px',
                             fontWeight: 'bold',
                             marginBottom: '24px',
                             color: '#1a1a1a',
@@ -401,7 +403,6 @@ export default function ClassStudents({
                 </div>
             )}
 
-            
             {studentsLoading ? (
                 <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
                     <div className="animate-pulse space-y-4">
@@ -416,7 +417,6 @@ export default function ClassStudents({
                     </div>
                 </div>
             ) : students.length === 0 ? (
-                
                 <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
                     <div className="flex flex-col items-center justify-center py-12">
                         <div className="w-20 h-20 rounded-full bg-[#E6F4F1] flex items-center justify-center mb-4">
@@ -437,7 +437,6 @@ export default function ClassStudents({
                     </div>
                 </div>
             ) : (
-                
                 <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
                     <Table
                         columns={columns}

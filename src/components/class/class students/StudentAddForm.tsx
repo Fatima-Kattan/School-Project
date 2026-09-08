@@ -10,15 +10,17 @@ interface Student {
     residential_address?: string;
     city?: string;
     comment?: string;
+    class_id?: number; 
 }
 
 interface StudentAddFormProps {
     sectionId: number;
+    classId?: number; 
     onSuccess: () => void;
     onCancel: () => void;
 }
 
-export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFormProps) {
+export function StudentAddForm({ sectionId, classId, onSuccess, onCancel }: StudentAddFormProps) {
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
@@ -36,6 +38,7 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
         try {
             const token = localStorage.getItem('token') || '';
             
+            
             const allStudentsRes = await fetch('http://localhost:8000/api/dashboard/students', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -43,6 +46,7 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                 },
             });
             const allStudentsResult = await allStudentsRes.json();
+            
             
             const sectionStudentsRes = await fetch(
                 `http://localhost:8000/api/dashboard/students/section/${sectionId}`,
@@ -71,7 +75,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
         }
     };
 
-    
     useEffect(() => {
         fetchData();
     }, [sectionId]);
@@ -88,18 +91,20 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
     }, []);
 
     
-    const availableStudents = allStudents.filter(
-        student => !sectionStudentIds.includes(student.id)
-    );
+    const availableStudents = allStudents.filter(student => {
+        
+        const notInSection = !sectionStudentIds.includes(student.id);
+        
+        const sameClass = classId ? student.class_id === classId : true;
+        return notInSection && sameClass;
+    });
 
-    
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedOptions = Array.from(e.target.selectedOptions);
         const ids = selectedOptions.map(opt => Number(opt.value)).filter(id => id !== 0);
         setSelectedStudentIds(ids);
     };
 
-    
     const removeSelectedStudent = (studentId: number) => {
         setSelectedStudentIds(prev => prev.filter(id => id !== studentId));
         if (selectRef.current) {
@@ -112,7 +117,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
         }
     };
 
-    
     const addStudentsToSection = async (studentIds: number[]) => {
         const token = localStorage.getItem('token') || '';
         
@@ -137,7 +141,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
         return await response.json();
     };
 
-    
     const handleSubmit = async () => {
         if (selectedStudentIds.length === 0) return;
         
@@ -164,7 +167,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
         }
     };
 
-    
     const selectedStudents = allStudents.filter(s => selectedStudentIds.includes(s.id));
 
     return (
@@ -198,7 +200,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                
                 <button
                     onClick={onCancel}
                     style={{
@@ -226,51 +227,47 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                     إضافة طالب للشعبة
                 </h2>
 
-                
                 <div style={{ overflow: 'visible' }}>
-                    
                     <div style={{ marginBottom: '16px' }}>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px', textAlign: 'right' }}>
                             عدد الطالب <span style={{ color: 'red' }}>(مطلوب)</span>
                         </label>
                         
-                        {/* Dropdown Select */}
                         <div style={{ position: 'relative' }} ref={dropdownRef}>
                             <div
-    onClick={() => setIsOpen(!isOpen)}
-    style={{
-        width: '100%',
-        minHeight: '45px',
-        padding: '8px 16px',
-        border: `1px solid ${isOpen ? '#007353' : '#ACACAC'}`,
-        borderRadius: '12px',
-        background: 'white',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: isOpen ? '0 0 0 2px rgba(0,115,83,0.2)' : 'none',
-    }}
->
-    <span style={{ textAlign: 'right', fontSize: '14px', color: '#6B7280', flex: 1 }}>
-        {selectedStudents.length > 0 
-            ? `تم اختيار ${selectedStudents.length} طالب` 
-            : availableStudents.length === 0 && allStudents.length > 0
-            ? 'جميع الطلاب مضافون للشعبة'
-            : 'Ctrl + Click (اختر الطالب)'}
-    </span>
-    <ChevronDown 
-        size={18} 
-        style={{ 
-            color: '#6B7280',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            marginLeft: '8px',
-        }} 
-    />
-</div>
-                            
+                                onClick={() => setIsOpen(!isOpen)}
+                                style={{
+                                    width: '100%',
+                                    minHeight: '45px',
+                                    padding: '8px 16px',
+                                    border: `1px solid ${isOpen ? '#007353' : '#ACACAC'}`,
+                                    borderRadius: '12px',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    boxShadow: isOpen ? '0 0 0 2px rgba(0,115,83,0.2)' : 'none',
+                                }}
+                            >
+                                <span style={{ textAlign: 'right', fontSize: '14px', color: '#6B7280', flex: 1 }}>
+                                    {selectedStudents.length > 0 
+                                        ? `تم اختيار ${selectedStudents.length} طالب` 
+                                        : availableStudents.length === 0 && allStudents.length > 0
+                                        ? 'جميع الطلاب مضافون للشعبة'
+                                        : 'Ctrl + Click (اختر الطالب)'}
+                                </span>
+                                <ChevronDown 
+                                    size={18} 
+                                    style={{ 
+                                        color: '#6B7280',
+                                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.2s',
+                                        marginLeft: '8px',
+                                    }} 
+                                />
+                            </div>
                             
                             {isOpen && (
                                 <div style={{
@@ -310,7 +307,9 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                                             </option>
                                         ) : availableStudents.length === 0 ? (
                                             <option value="0" disabled style={{ color: '#9CA3AF' }}>
-                                                {allStudents.length === 0 ? 'لا يوجد طلاب لعرضهم' : 'جميع الطلاب مضافون بالفعل للشعبة'}
+                                                {allStudents.length === 0 ? 'لا يوجد طلاب لعرضهم' : 
+                                                    classId ? 'جميع طلاب هذا الصف مضافون بالفعل للشعبة' : 
+                                                    'جميع الطلاب مضافون بالفعل للشعبة'}
                                             </option>
                                         ) : (
                                             availableStudents.map((student) => (
@@ -325,8 +324,14 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                         </div>
                         
                         
+                        {!loadingStudents && (
+                            <div style={{ marginTop: '4px', fontSize: '12px', color: '#6B7280', textAlign: 'right' }}>
+                                {availableStudents.length > 0 && (
+                                    <span>عدد الطلاب المتاحين: {availableStudents.length}</span>
+                                )}
+                            </div>
+                        )}
 
-                        
                         {error && (
                             <div style={{ marginTop: '8px', fontSize: '14px', color: '#DC2626', textAlign: 'right', background: '#FEF2F2', padding: '8px', borderRadius: '8px' }}>
                                 ⚠️ {error}
@@ -334,10 +339,8 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                         )}
                     </div>
 
-                    
                     {selectedStudents.length > 0 && (
                         <div style={{ marginBottom: '16px' }}>
-                            
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: 'white', borderRadius: '12px', minHeight: '50px' }}>
                                 {selectedStudents.map((student) => (
                                     <div
@@ -359,7 +362,6 @@ export function StudentAddForm({ sectionId, onSuccess, onCancel }: StudentAddFor
                         </div>
                     )}
 
-                    
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px' }}>
                         <button
                             type="button"
