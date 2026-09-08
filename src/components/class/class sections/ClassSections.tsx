@@ -4,10 +4,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, SquarePen, Trash, X } from 'lucide-react';
+import { Plus, Eye, SquarePen, Trash, X } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 import { SectionForm } from './SectionForm';
+import { SectionDeleteForm } from './SectionDeleteForm';
+import { SectionDeleteDialog } from './SectionDeleteDialog';
 import { Dialog } from '@/components/shared/dialog/dialog';
 
 interface ClassSectionsProps {
@@ -17,11 +19,14 @@ interface ClassSectionsProps {
         id: number;
         name: string;
         comment: string | null;
-        teachers_count: number;
+        students_count?: number;        // ✅ تصحيح: students_count بدلاً من teachers_count
+        total_students?: number;
+        statistics?: { students_count: number };
+        students?: Array<any>;
     }>;
     onSectionClick?: (sectionId: number) => void;
-    onSectionChanged?: () => void;
-    onAddSection?: () => void; // ✅ إضافة prop جديد
+    onSectionChanged?: (type?: 'add' | 'edit' | 'delete', data?: any) => void;
+    onAddSection?: () => void;
 }
 
 export default function ClassSections({
@@ -30,13 +35,14 @@ export default function ClassSections({
     sections,
     onSectionClick,
     onSectionChanged,
-    onAddSection, // ✅ استقبال الـ prop
+    onAddSection,
 }: ClassSectionsProps) {
     const router = useRouter();
 
     // ✅ حالات الديالوجات
     const [showFormDialog, setShowFormDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showStudentsDialog, setShowStudentsDialog] = useState(false);
     const [selectedSection, setSelectedSection] = useState<any>(null);
     const [mode, setMode] = useState<'create' | 'edit'>('create');
 
@@ -54,10 +60,21 @@ export default function ClassSections({
         setShowFormDialog(true);
     };
 
-    // ✅ فتح نافذة حذف شعبة
+    // ✅ فتح نافذة حذف شعبة (مع التحقق من وجود طلاب)
     const openDeleteDialog = (section: any) => {
         setSelectedSection(section);
-        setShowDeleteDialog(true);
+        
+        const hasStudents = 
+            (section?.total_students || 0) > 0 ||
+            (section?.statistics?.students_count || 0) > 0 ||
+            (section?.students_count || 0) > 0 ||
+            (section?.students && section.students.length > 0);
+        
+        if (hasStudents) {
+            setShowStudentsDialog(true); // ← تحذير بوجود طلاب
+        } else {
+            setShowDeleteDialog(true); // ← فورم الحذف
+        }
     };
 
     // ✅ إغلاق الديالوجات
@@ -71,34 +88,59 @@ export default function ClassSections({
         setSelectedSection(null);
     };
 
+    const closeStudentsDialog = () => {
+        setShowStudentsDialog(false);
+        setSelectedSection(null);
+    };
+
     // ✅ معالج نجاح النموذج (إضافة/تعديل)
-    const handleFormSuccess = () => {
+    const handleFormSuccess = (newSection?: any) => {
+        const wasEdit = mode === 'edit';
+        const wasAdd = mode === 'create';
+        
+        if (wasEdit && newSection) {
+            if (onSectionChanged) {
+                onSectionChanged('edit', newSection);
+            }
+        } else if (wasAdd && newSection) {
+            if (onSectionChanged) {
+                onSectionChanged('add', newSection);
+            }
+        }
+        
         setShowFormDialog(false);
         setSelectedSection(null);
-        if (onSectionChanged) {
-            onSectionChanged();
-        } else {
-            window.location.reload();
-        }
     };
 
     // ✅ معالج نجاح الحذف
     const handleDeleteSuccess = () => {
+        const deletedId = selectedSection?.id;
+        console.log('✅ [ClassSections] Section deleted successfully! ID:', deletedId);
+        
         setShowDeleteDialog(false);
         setSelectedSection(null);
-        if (onSectionChanged) {
-            onSectionChanged();
-        } else {
-            window.location.reload();
+        
+        if (onSectionChanged && deletedId) {
+            onSectionChanged('delete', deletedId);
         }
+    };
+
+    // ✅ دالة حساب عدد الطلاب
+    const getStudentsCount = (section: any): number => {
+        if (!section) return 0;
+        return section.total_students || 
+               section.statistics?.students_count || 
+               section.students_count || 
+               section.students?.length || 
+               0;
     };
 
     // ✅ دالة إضافة شعبة (للزر)
     const handleAddSection = () => {
         if (onAddSection) {
-            onAddSection(); // ✅ استدعاء الـ prop من الأب
+            onAddSection();
         } else {
-            openAddDialog(); // ✅ الفتح المحلي كاحتياطي
+            openAddDialog();
         }
     };
 
@@ -129,10 +171,10 @@ export default function ClassSections({
                 <Dialog
                     isOpen={showFormDialog}
                     onClose={closeFormDialog}
+                    title="إضافة شعبة"
                     maxWidth="lg"
                     showCancel={false}
                     showConfirm={false}
-                    hideCloseButton={false}
                 >
                     <SectionForm
                         mode="create"
@@ -158,13 +200,14 @@ export default function ClassSections({
             ),
         },
         {
-            key: 'teachers_count',
-            header: 'عدد الطلاب',
+            key: 'students_count',
+            header: 'عدد الطلاب',  // ✅ تصحيح: students_count
             align: 'center',
             width: 130,
-            render: (row) => (
-                <span className="font-medium">{row.teachers_count || 0}</span>
-            ),
+            render: (row) => {
+                const count = getStudentsCount(row);
+                return <span className="font-medium">{count}</span>;
+            },
         },
         {
             key: 'comment',
@@ -200,13 +243,14 @@ export default function ClassSections({
 
     return (
         <>
+            {/* ✅ ديالوج الإضافة/التعديل */}
             <Dialog
                 isOpen={showFormDialog}
                 onClose={closeFormDialog}
+                title={mode === 'create' ? 'إضافة شعبة' : 'تعديل شعبة'}
                 maxWidth="lg"
                 showCancel={false}
                 showConfirm={false}
-                hideCloseButton={false}
             >
                 <SectionForm
                     mode={mode}
@@ -216,6 +260,40 @@ export default function ClassSections({
                     onCancel={closeFormDialog}
                 />
             </Dialog>
+
+            {/* ✅ ديالوج حذف الشعبة (عند عدم وجود طلاب) */}
+            {showDeleteDialog && selectedSection && (
+                <Dialog
+                    isOpen={showDeleteDialog}
+                    onClose={closeDeleteDialog}
+                    maxWidth="md"
+                    showCancel={false}
+                    showConfirm={false}
+                >
+                    <SectionDeleteForm
+                        sectionData={{
+                            id: selectedSection.id,
+                            name: selectedSection.name,
+                            class_name: className,
+                        }}
+                        onSuccess={handleDeleteSuccess}
+                        onCancel={closeDeleteDialog}
+                    />
+                </Dialog>
+            )}
+
+            {/* ✅ ديالوج تحذير (عند وجود طلاب) */}
+            <SectionDeleteDialog
+                isOpen={showStudentsDialog}
+                sectionData={{
+                    id: selectedSection?.id,
+                    name: selectedSection?.name,
+                    total_students: getStudentsCount(selectedSection),
+                    statistics: selectedSection?.statistics,
+                    students: selectedSection?.students,
+                }}
+                onClose={closeStudentsDialog}
+            />
 
             {/* ✅ الجدول */}
             <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">

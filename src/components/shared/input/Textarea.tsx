@@ -53,8 +53,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             bg-white text-gray-900 placeholder-gray-400
             transition-all duration-200
             outline-none resize-y
-            ${error ? 'border-red-500 ring-2 ring-red-200 focus:ring-red-300' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}
-            ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'}
+${error ? 'border-red-500 ring-2 ring-red-200 focus:ring-red-300' : 'rounded-[12px] text-right resize-none border-1 border-[#ACACAC] focus:border-[#007353] focus:shadow-lg focus:ring-0 outline-none'}            ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'}
             ${className}
         `}
                     aria-invalid={!!error}
