@@ -256,10 +256,15 @@ export default function TeachersPage() {
             />
             <EditTeacherDialog
                 isOpen={isEditDialogOpen}
-                onClose={() => setIsEditDialogOpen(false)}
-                onSuccess={fetchTeachers}
+                onClose={() => {
+                    setIsEditDialogOpen(false);
+                    setSelectedTeacher(null);
+                }}
+                onSuccess={() => {
+                    fetchTeachers(); // تحديث القائمة بعد التعديل
+                }}
                 token={getToken()}
-                teacher={selectedTeacher}
+                teacherId={selectedTeacher?.id || null}  // ✅ تمرير الـ ID فقط
             />
 
             {/* Delete Confirmation Dialog */}
