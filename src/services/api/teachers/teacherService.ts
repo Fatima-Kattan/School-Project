@@ -104,7 +104,6 @@ export const teacherService = {
         return response.json();
     },
 
-    // ✅ دالة إنشاء الأستاذ
     async create(data: any, token: string): Promise<any> {
         const response = await fetch(`${API_URL}/dashboard/teachers`, {
             method: 'POST',
@@ -115,15 +114,18 @@ export const teacherService = {
             body: JSON.stringify(data),
         });
 
+
         if (!response.ok) {
             const error = await response.json();
+            console.error('❌ Error response:', error);
             throw new Error(error.message || 'Failed to create teacher');
         }
 
-        return response.json();
+        const result = await response.json();
+        console.log('✅ Create response:', result);
+        return result;
     },
 
-    // ✅ دالة تحديث الشعب والمواد
     async updateTeacherSectionsAndSubjects(teacherId: number, data: { sections: number[], subjects: number[] }, token: string): Promise<any> {
         const response = await fetch(`${API_URL}/dashboard/teachers/${teacherId}/assign-sections-subjects`, {
             method: 'PUT',
@@ -193,10 +195,6 @@ export const teacherService = {
             const subjectsData = await subjectsRes.json();
             const classesData = await classesRes.json();
 
-            console.log('✅ Sections Response:', sectionsData);
-            console.log('✅ Subjects Response:', subjectsData);
-            console.log('✅ Classes Response:', classesData);
-
             // ✅ استخراج البيانات من Sections
             let sections = [];
             if (sectionsData.data && Array.isArray(sectionsData.data)) {
@@ -246,7 +244,6 @@ export const teacherService = {
                 subjects = [];
             }
 
-            // ✅ استخراج البيانات من Classes
             let classes = [];
             if (classesData.data && Array.isArray(classesData.data)) {
                 classes = classesData.data;
@@ -307,7 +304,6 @@ export const teacherService = {
         return response.json();
     },
 
-    // ✅ دالة تحديث الأستاذ
     async update(id: number, data: any, token: string): Promise<any> {
         const response = await fetch(`${API_URL}/dashboard/teachers/${id}`, {
             method: 'PUT',
