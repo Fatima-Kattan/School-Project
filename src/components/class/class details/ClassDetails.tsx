@@ -8,6 +8,7 @@ import { Button } from '@/components/shared/button/button';
 import { Breadcrumb } from '@/components/shared/breadcrumb/breadcrumb';
 import { Dialog } from '@/components/shared/dialog/dialog';
 import { SectionForm } from '../class sections/SectionForm';
+import { SubjectForm } from '../class subjects/SubjectForm';
 import ClassSubjects from '../class subjects/ClassSubjects';
 import ClassSections from '../class sections/ClassSections';
 
@@ -36,8 +37,9 @@ type TabType = 'subjects' | 'sections';
 export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDetailsProps) => {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabType>('sections');
-    const [classData, setClassData] = useState(initialClassData);
+    const [classData, setClassData] = useState<any>(initialClassData); // ✅ استخدام any
     const [showSectionFormDialog, setShowSectionFormDialog] = useState(false);
+    const [showSubjectFormDialog, setShowSubjectFormDialog] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -70,12 +72,12 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         }));
     };
 
-    // ✅ عند نجاح الإضافة
+    // ✅ معالجات الشعبة
     const handleSectionFormSuccess = (newSection?: any) => {
         setShowSectionFormDialog(false);
         
         if (newSection) {
-            setClassData(prev => ({
+            setClassData((prev: any) => ({ // ✅ استخدام any
                 ...prev,
                 sections: [...(prev.sections || []), newSection],
                 statistics: {
@@ -92,13 +94,12 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setRefreshKey(prev => prev + 1);
     };
 
-    // ✅ عند تعديل شعبة
     const handleSectionUpdate = (updatedSection: any) => {
         if (!updatedSection) return;
         
-        setClassData(prev => ({
+        setClassData((prev: any) => ({ // ✅ استخدام any
             ...prev,
-            sections: (prev.sections || []).map(section => 
+            sections: (prev.sections || []).map((section: any) => 
                 section.id === updatedSection.id ? updatedSection : section
             )
         }));
@@ -106,11 +107,10 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setRefreshKey(prev => prev + 1);
     };
 
-    // ✅ عند حذف شعبة
     const handleSectionDelete = (sectionId: number) => {
-        setClassData(prev => ({
+        setClassData((prev: any) => ({ // ✅ استخدام any
             ...prev,
-            sections: (prev.sections || []).filter(section => section.id !== sectionId),
+            sections: (prev.sections || []).filter((section: any) => section.id !== sectionId),
             statistics: {
                 ...prev.statistics,
                 total_sections: (prev.statistics?.total_sections || 0) - 1,
@@ -120,7 +120,6 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setRefreshKey(prev => prev + 1);
     };
 
-    // ✅ معالج التغيير الرئيسي
     const handleSectionChanged = (type?: 'add' | 'edit' | 'delete', data?: any) => {
         if (type === 'add' && data) {
             handleSectionFormSuccess(data);
@@ -144,9 +143,81 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setShowSectionFormDialog(false);
     };
 
+    // ✅ معالجات المادة
+    const handleSubjectFormSuccess = (newSubject?: any) => {
+        setShowSubjectFormDialog(false);
+        
+        if (newSubject) {
+            setClassData((prev: any) => ({ // ✅ استخدام any
+                ...prev,
+                subjects: [...(prev.subjects || []), newSubject],
+                statistics: {
+                    ...prev.statistics,
+                    total_subjects: (prev.statistics?.total_subjects || 0) + 1,
+                }
+            }));
+        } else {
+            if (onRefresh) {
+                onRefresh();
+            }
+        }
+        
+        setRefreshKey(prev => prev + 1);
+    };
+
+    const handleSubjectUpdate = (updatedSubject: any) => {
+        if (!updatedSubject) return;
+        
+        setClassData((prev: any) => ({ // ✅ استخدام any
+            ...prev,
+            subjects: (prev.subjects || []).map((subject: any) => 
+                subject.id === updatedSubject.id ? updatedSubject : subject
+            )
+        }));
+        
+        setRefreshKey(prev => prev + 1);
+    };
+
+    const handleSubjectDelete = (subjectId: number) => {
+        setClassData((prev: any) => ({ // ✅ استخدام any
+            ...prev,
+            subjects: (prev.subjects || []).filter((subject: any) => subject.id !== subjectId),
+            statistics: {
+                ...prev.statistics,
+                total_subjects: (prev.statistics?.total_subjects || 0) - 1,
+            }
+        }));
+        
+        setRefreshKey(prev => prev + 1);
+    };
+
+    const handleSubjectChanged = (type?: 'add' | 'edit' | 'delete', data?: any) => {
+        if (type === 'add' && data) {
+            handleSubjectFormSuccess(data);
+        } else if (type === 'edit' && data) {
+            handleSubjectUpdate(data);
+        } else if (type === 'delete' && data) {
+            handleSubjectDelete(data);
+        } else {
+            if (onRefresh) {
+                onRefresh();
+            }
+            setRefreshKey(prev => prev + 1);
+        }
+    };
+
+    const openAddSubjectDialog = () => {
+        setShowSubjectFormDialog(true);
+    };
+
+    const closeAddSubjectDialog = () => {
+        setShowSubjectFormDialog(false);
+    };
+
     const isSectionsTab = activeTab === 'sections';
     const sectionsWithStudents = getSectionsWithStudentsCount();
     const hasSections = sectionsWithStudents.length > 0;
+    const hasSubjects = (classData.subjects || []).length > 0;
 
     const breadcrumbItems = [
         { label: 'الصفوف والشعب', href: '/classes' },
@@ -251,19 +322,33 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
                     showBackButton={true}
                     onBack={() => router.back()}
                 />
-                {isSectionsTab && hasSections && (
+                {/* زر الإضافة حسب التبويب النشط */}
+                {(isSectionsTab && hasSections) || (activeTab === 'subjects' && hasSubjects) ? (
                     <div className="absolute left-6 top-1/2 -translate-y-1/2">
-                        <Button
-                            variant="primary"
-                            onClick={openAddSectionDialog}
-                            leftIcon={<Plus size={16} />}
-                            size="md"
-                            className="px-5 py-2.5 shadow-sm"
-                        >
-                            إضافة شعبة
-                        </Button>
+                        {isSectionsTab && hasSections && (
+                            <Button
+                                variant="primary"
+                                onClick={openAddSectionDialog}
+                                leftIcon={<Plus size={16} />}
+                                size="md"
+                                className="px-5 py-2.5 shadow-sm"
+                            >
+                                إضافة شعبة
+                            </Button>
+                        )}
+                        {activeTab === 'subjects' && hasSubjects && (
+                            <Button
+                                variant="primary"
+                                onClick={openAddSubjectDialog}
+                                leftIcon={<Plus size={16} />}
+                                size="md"
+                                className="px-5 py-2.5 shadow-sm"
+                            >
+                                إضافة مادة
+                            </Button>
+                        )}
                     </div>
-                )}
+                ) : null}
             </div>
 
             {/* التبويبات */}
@@ -323,9 +408,12 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
             <div className="px-4 pb-6">
                 {activeTab === 'subjects' && (
                     <ClassSubjects
+                        key={refreshKey}
                         classId={classData.id}
                         subjects={classData.subjects || []}
                         onSubjectClick={handleSubjectClick}
+                        onSubjectChanged={handleSubjectChanged}
+                        onAddSubject={openAddSubjectDialog}
                     />
                 )}
 
@@ -357,6 +445,24 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
                     initialData={null}
                     onSuccess={handleSectionFormSuccess}
                     onCancel={closeAddSectionDialog}
+                />
+            </Dialog>
+
+            {/* ديالوج إضافة مادة */}
+            <Dialog
+                isOpen={showSubjectFormDialog}
+                onClose={closeAddSubjectDialog}
+                maxWidth="lg"
+                showCancel={false}
+                showConfirm={false}
+                hideCloseButton={false}
+            >
+                <SubjectForm
+                    mode="create"
+                    classId={parseInt(classData.id)}
+                    initialData={null}
+                    onSuccess={handleSubjectFormSuccess}
+                    onCancel={closeAddSubjectDialog}
                 />
             </Dialog>
         </div>

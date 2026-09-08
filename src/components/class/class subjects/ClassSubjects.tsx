@@ -6,6 +6,7 @@ import { Plus, Eye, Edit, Trash2, Trash, Square, SquarePen } from 'lucide-react'
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
 
+// ✅ التغيير 1: إضافة onSubjectChanged و onAddSubject إلى interface
 interface ClassSubjectsProps {
     classId: string;
     subjects: Array<{
@@ -16,18 +17,45 @@ interface ClassSubjectsProps {
         semester?: string;
     }>;
     onSubjectClick?: (subjectId: number) => void;
+    onSubjectChanged?: (type: 'add' | 'edit' | 'delete', data?: any) => void; // ✅ جديد
+    onAddSubject?: () => void; // ✅ جديد
 }
 
+// ✅ التغيير 2: استقبال الـ props الجديدة
 export default function ClassSubjects({
     classId,
     subjects,
-    onSubjectClick
+    onSubjectClick,
+    onSubjectChanged, // ✅ جديد
+    onAddSubject // ✅ جديد
 }: ClassSubjectsProps) {
     const router = useRouter();
 
-    // ✅ دالة إضافة مادة
+    // ✅ التغيير 3: تعديل دالة إضافة مادة لاستخدام onAddSubject إذا كان موجوداً
     const handleAddSubject = () => {
-        router.push(`/classes/${classId}/subjects/create`);
+        if (onAddSubject) {
+            onAddSubject(); // ✅ استخدام الـ prop إذا كان موجود
+        } else {
+            router.push(`/classes/${classId}/subjects/create`); // ✅ fallback للطريقة القديمة
+        }
+    };
+
+    // ✅ التغيير 4: تعديل دالة التعديل لاستخدام onSubjectChanged
+    const handleEditSubject = (row: any) => {
+        if (onSubjectChanged) {
+            onSubjectChanged('edit', row); // ✅ إعلام المكون الأب بعملية التعديل
+        } else {
+            router.push(`/classes/${classId}/subjects/${row.id}/edit`); // ✅ fallback
+        }
+    };
+
+    // ✅ التغيير 5: تعديل دالة الحذف لاستخدام onSubjectChanged
+    const handleDeleteSubject = (row: any) => {
+        if (onSubjectChanged) {
+            onSubjectChanged('delete', row.id); // ✅ إعلام المكون الأب بعملية الحذف
+        } else {
+            console.log('🗑️ Delete subject:', row.id); // ✅ fallback
+        }
     };
 
     // ✅ إذا لم توجد مواد → عرض رسالة "لا مواد مضافين بعد"
@@ -109,15 +137,14 @@ export default function ClassSubjects({
         },
     ];
 
-    // ✅ تعريف الأزرار (Actions)
+    // ✅ التغيير 6: تعديل تعريف الأزرار (Actions) لاستخدام الدوال الجديدة
     const actions: TableAction<any>[] = [
         {
             label: 'تعديل',
             icon: <SquarePen size={16} />,
             variant: 'warning',
             onClick: (row) => {
-                console.log('✏️ Edit subject:', row.id);
-                router.push(`/classes/${classId}/subjects/${row.id}/edit`);
+                handleEditSubject(row); // ✅ استخدام الدالة الجديدة
             },
         },
         {
@@ -125,7 +152,7 @@ export default function ClassSubjects({
             icon: <Trash size={16} />,
             variant: 'danger',
             onClick: (row) => {
-                console.log('🗑️ Delete subject:', row.id);
+                handleDeleteSubject(row); // ✅ استخدام الدالة الجديدة
             },
         },
     ];
