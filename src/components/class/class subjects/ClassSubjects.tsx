@@ -52,25 +52,14 @@ export default function ClassSubjects({
     };
 
     const handleDeleteSubject = (row: any) => {
-        // ✅ إذا كانت المادة تحتوي على طلاب أو مدرسين، نعرض رسالة المنع
-        if ((row.total_students && row.total_students > 0) || 
-            (row.teachers_count && row.teachers_count > 0)) {
-            setSelectedSubject(row);
-            setShowDeleteDialog(true);
-        } else {
-            // ✅ إذا كانت فارغة، نعرض مودال التأكيد
-            setSelectedSubject(row);
-            setShowDeleteDialog(true);
-        }
+        setSelectedSubject(row);
+        setShowDeleteDialog(true);
     };
 
-    // ✅ دالة تأكيد الحذف - معدلة لاستدعاء onSubjectChanged
     const handleConfirmDelete = () => {
         if (selectedSubject && onSubjectChanged) {
-            // ✅ استدعاء onSubjectChanged مع نوع 'delete' و id المادة
             onSubjectChanged('delete', selectedSubject.id);
         }
-        // ✅ إغلاق الديالوج ومسح البيانات
         setShowDeleteDialog(false);
         setSelectedSubject(null);
     };
@@ -171,18 +160,11 @@ export default function ClassSubjects({
                 />
             </div>
 
-            {/* ✅ تمرير onConfirm إلى SubjectDeleteForm */}
             <SubjectDeleteForm
                 isOpen={showDeleteDialog}
                 subjectData={selectedSubject}
                 onClose={closeDeleteDialog}
-                onConfirm={handleConfirmDelete}  // ✅ تمرير onConfirm
-                onSuccess={() => {
-                    // ✅ استدعاء onSubjectChanged للتحديث
-                    if (selectedSubject && onSubjectChanged) {
-                        onSubjectChanged('delete', selectedSubject.id);
-                    }
-                }}
+                onConfirm={handleConfirmDelete}
             />
         </>
     );

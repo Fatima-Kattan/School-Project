@@ -40,7 +40,7 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     const [classData, setClassData] = useState<any>(initialClassData);
     const [showSectionFormDialog, setShowSectionFormDialog] = useState(false);
     const [showSubjectFormDialog, setShowSubjectFormDialog] = useState(false);
-    const [editingSubject, setEditingSubject] = useState<any>(null); // ✅ جديد: لتخزين المادة المراد تعديلها
+    const [editingSubject, setEditingSubject] = useState<any>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -51,6 +51,16 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     useEffect(() => {
         setClassData(initialClassData);
     }, [initialClassData]);
+
+    // ✅ دالة لحساب الإحصائيات من البيانات الفعلية
+    const calculateStatistics = (data: any) => {
+        return {
+            total_students: data.statistics?.total_students || 0,
+            total_sections: data.sections?.length || 0,
+            total_subjects: data.subjects?.length || 0,  // ✅ نحسب من الـ subjects الفعلية
+            total_teachers: data.statistics?.total_teachers || 0,
+        };
+    };
 
     const getSectionsWithStudentsCount = () => {
         if (!classData.sections) return [];
@@ -73,7 +83,6 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         }));
     };
 
-    // ✅ معالجات الشعبة
     const handleSectionFormSuccess = (newSection?: any) => {
         setShowSectionFormDialog(false);
         
@@ -81,10 +90,6 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
             setClassData((prev: any) => ({
                 ...prev,
                 sections: [...(prev.sections || []), newSection],
-                statistics: {
-                    ...prev.statistics,
-                    total_sections: (prev.statistics?.total_sections || 0) + 1,
-                }
             }));
         } else {
             if (onRefresh) {
@@ -112,10 +117,6 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setClassData((prev: any) => ({
             ...prev,
             sections: (prev.sections || []).filter((section: any) => section.id !== sectionId),
-            statistics: {
-                ...prev.statistics,
-                total_sections: (prev.statistics?.total_sections || 0) - 1,
-            }
         }));
         
         setRefreshKey(prev => prev + 1);
@@ -144,17 +145,14 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setShowSectionFormDialog(false);
     };
 
-    // ✅ معالجات المادة
     const handleSubjectFormSuccess = (newSubject?: any) => {
         setShowSubjectFormDialog(false);
-        setEditingSubject(null); // ✅ مسح بيانات التعديل
+        setEditingSubject(null);
         
         if (newSubject) {
-            // ✅ التحقق إذا كانت عملية تعديل (يوجد id في القائمة)
             const isEdit = classData.subjects?.some((s: any) => s.id === newSubject.id);
             
             if (isEdit) {
-                // ✅ تعديل المادة الموجودة
                 setClassData((prev: any) => ({
                     ...prev,
                     subjects: (prev.subjects || []).map((subject: any) => 
@@ -162,14 +160,9 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
                     )
                 }));
             } else {
-                // ✅ إضافة مادة جديدة
                 setClassData((prev: any) => ({
                     ...prev,
                     subjects: [...(prev.subjects || []), newSubject],
-                    statistics: {
-                        ...prev.statistics,
-                        total_subjects: (prev.statistics?.total_subjects || 0) + 1,
-                    }
                 }));
             }
         } else {
@@ -198,21 +191,15 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setClassData((prev: any) => ({
             ...prev,
             subjects: (prev.subjects || []).filter((subject: any) => subject.id !== subjectId),
-            statistics: {
-                ...prev.statistics,
-                total_subjects: (prev.statistics?.total_subjects || 0) - 1,
-            }
         }));
         
         setRefreshKey(prev => prev + 1);
     };
 
-    // ✅ معالج التغيير للمواد (معدل)
     const handleSubjectChanged = (type?: 'add' | 'edit' | 'delete', data?: any) => {
         if (type === 'add' && data) {
             handleSubjectFormSuccess(data);
         } else if (type === 'edit' && data) {
-            // ✅ فتح Dialog التعديل مع البيانات
             setEditingSubject(data);
             setShowSubjectFormDialog(true);
         } else if (type === 'delete' && data) {
@@ -226,13 +213,13 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     };
 
     const openAddSubjectDialog = () => {
-        setEditingSubject(null); // ✅ مسح بيانات التعديل عند الإضافة
+        setEditingSubject(null);
         setShowSubjectFormDialog(true);
     };
 
     const closeAddSubjectDialog = () => {
         setShowSubjectFormDialog(false);
-        setEditingSubject(null); // ✅ مسح بيانات التعديل عند الإغلاق
+        setEditingSubject(null);
     };
 
     const isSectionsTab = activeTab === 'sections';
@@ -253,12 +240,8 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         console.log('📖 Subject clicked:', subjectId);
     };
 
-    const statistics = classData.statistics || {
-        total_students: 0,
-        total_sections: 0,
-        total_subjects: 0,
-        total_teachers: 0,
-    };
+    // ✅ استخدام دالة حساب الإحصائيات
+    const statistics = calculateStatistics(classData);
 
     const statsCards = [
         {
