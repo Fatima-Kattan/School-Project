@@ -39,16 +39,19 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     const [classData, setClassData] = useState(initialClassData);
     const [showSectionFormDialog, setShowSectionFormDialog] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    // ✅ دالة لحساب عدد الطلاب في كل شعبة من مصفوفة students
+    useEffect(() => {
+        setClassData(initialClassData);
+    }, [initialClassData]);
+
     const getSectionsWithStudentsCount = () => {
         if (!classData.sections) return [];
 
-        // 1. تجميع الطلاب حسب section_id
         const studentsBySection: { [key: number]: number } = {};
         
         if (classData.students) {
@@ -60,9 +63,6 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
             });
         }
 
-        console.log('📊 Students by section:', studentsBySection);
-
-        // 2. إضافة عدد الطلاب لكل شعبة
         return classData.sections.map((section: any) => ({
             ...section,
             total_students: studentsBySection[section.id] || 0,
@@ -70,16 +70,69 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         }));
     };
 
-    const handleSectionFormSuccess = () => {
+    // ✅ عند نجاح الإضافة
+    const handleSectionFormSuccess = (newSection?: any) => {
         setShowSectionFormDialog(false);
-        if (onRefresh) {
-            onRefresh();
+        
+        if (newSection) {
+            setClassData(prev => ({
+                ...prev,
+                sections: [...(prev.sections || []), newSection],
+                statistics: {
+                    ...prev.statistics,
+                    total_sections: (prev.statistics?.total_sections || 0) + 1,
+                }
+            }));
+        } else {
+            if (onRefresh) {
+                onRefresh();
+            }
         }
+        
+        setRefreshKey(prev => prev + 1);
     };
 
-    const handleSectionChanged = () => {
-        if (onRefresh) {
-            onRefresh();
+    // ✅ عند تعديل شعبة
+    const handleSectionUpdate = (updatedSection: any) => {
+        if (!updatedSection) return;
+        
+        setClassData(prev => ({
+            ...prev,
+            sections: (prev.sections || []).map(section => 
+                section.id === updatedSection.id ? updatedSection : section
+            )
+        }));
+        
+        setRefreshKey(prev => prev + 1);
+    };
+
+    // ✅ عند حذف شعبة
+    const handleSectionDelete = (sectionId: number) => {
+        setClassData(prev => ({
+            ...prev,
+            sections: (prev.sections || []).filter(section => section.id !== sectionId),
+            statistics: {
+                ...prev.statistics,
+                total_sections: (prev.statistics?.total_sections || 0) - 1,
+            }
+        }));
+        
+        setRefreshKey(prev => prev + 1);
+    };
+
+    // ✅ معالج التغيير الرئيسي
+    const handleSectionChanged = (type?: 'add' | 'edit' | 'delete', data?: any) => {
+        if (type === 'add' && data) {
+            handleSectionFormSuccess(data);
+        } else if (type === 'edit' && data) {
+            handleSectionUpdate(data);
+        } else if (type === 'delete' && data) {
+            handleSectionDelete(data);
+        } else {
+            if (onRefresh) {
+                onRefresh();
+            }
+            setRefreshKey(prev => prev + 1);
         }
     };
 
@@ -278,9 +331,10 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
 
                 {activeTab === 'sections' && (
                     <ClassSections
+                        key={refreshKey}
                         classId={classData.id}
                         className={classData.name}
-                        sections={sectionsWithStudents} // ✅ تمرير الشعب مع عدد الطلاب المحسوب
+                        sections={sectionsWithStudents}
                         onSectionClick={handleSectionClick}
                         onSectionChanged={handleSectionChanged}
                         onAddSection={openAddSectionDialog}

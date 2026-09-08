@@ -1,3 +1,4 @@
+// src/components/class/class sections/ClassSections.tsx
 'use client';
 
 import { useState } from 'react';
@@ -17,8 +18,8 @@ interface ClassSectionsProps {
         name: string;
         comment: string | null;
         teachers_count: number;
-        total_students?: number;          // ✅ من API
-        students_count?: number;          // ✅ من API
+        total_students?: number;
+        students_count?: number;
         statistics?: {
             students_count: number;
         };
@@ -31,7 +32,7 @@ interface ClassSectionsProps {
         }>;
     }>;
     onSectionClick?: (sectionId: number) => void;
-    onSectionChanged?: () => void;
+    onSectionChanged?: (type?: 'add' | 'edit' | 'delete', data?: any) => void;
     onAddSection?: () => void;
 }
 
@@ -45,14 +46,14 @@ export default function ClassSections({
 }: ClassSectionsProps) {
     const router = useRouter();
 
-    // ====== State Management ======
     const [showFormDialog, setShowFormDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showStudentsDialog, setShowStudentsDialog] = useState(false);
     const [selectedSection, setSelectedSection] = useState<any>(null);
+    // ✅ متغير لتخزين البيانات المعدلة مؤقتاً
+    const [editedSectionData, setEditedSectionData] = useState<any>(null);
 
-    // ====== Form Handlers ======
     const openAddDialog = () => {
         setShowFormDialog(true);
     };
@@ -60,51 +61,62 @@ export default function ClassSections({
     const closeFormDialog = () => {
         setShowFormDialog(false);
         setSelectedSection(null);
+        setEditedSectionData(null);
     };
 
     const openEditDialog = (section: any) => {
         setSelectedSection(section);
+        setEditedSectionData(null); // ✅ reset
         setShowEditDialog(true);
     };
 
     const closeEditDialog = () => {
         setShowEditDialog(false);
         setSelectedSection(null);
+        setEditedSectionData(null);
     };
 
-    const handleFormSuccess = () => {
+    // ✅ معالج نجاح الفورم (إضافة أو تعديل)
+    const handleFormSuccess = (newSection?: any) => {
+        const wasEdit = showEditDialog;
+        const wasAdd = showFormDialog;
+        const currentSection = selectedSection;
+        
+        console.log('📝 [ClassSections] Form success:', { wasEdit, wasAdd, newSection, currentSection });
+        
+        // ✅ إذا كان تعديل والبيانات الجديدة موجودة
+        if (wasEdit && newSection) {
+            setEditedSectionData(newSection);
+            // ✅ نمرر البيانات المعدلة إلى الأب
+            if (onSectionChanged) {
+                onSectionChanged('edit', newSection);
+            }
+        } 
+        // ✅ إذا كان إضافة
+        else if (wasAdd && newSection) {
+            if (onSectionChanged) {
+                onSectionChanged('add', newSection);
+            }
+        }
+        
         setShowFormDialog(false);
         setShowEditDialog(false);
         setSelectedSection(null);
-        if (onSectionChanged) {
-            onSectionChanged();
-        }
     };
 
-    // ====== Delete Handlers ======
     const openDeleteDialog = (section: any) => {
         setSelectedSection(section);
         
-        // ✅ حساب عدد الطلاب من جميع المصادر الممكنة
         const hasStudents = 
             (section?.total_students || 0) > 0 ||
             (section?.statistics?.students_count || 0) > 0 ||
             (section?.students_count || 0) > 0 ||
             (section?.students && section.students.length > 0);
         
-        console.log('🔍 Checking section students:', {
-            sectionName: section.name,
-            total_students: section?.total_students,
-            statistics: section?.statistics?.students_count,
-            students_count: section?.students_count,
-            students: section?.students?.length,
-            hasStudents: hasStudents
-        });
-        
         if (hasStudents) {
-            setShowStudentsDialog(true); // ← يظهر التحذير
+            setShowStudentsDialog(true);
         } else {
-            setShowDeleteDialog(true); // ← يظهر الفورم للحذف
+            setShowDeleteDialog(true);
         }
     };
 
@@ -119,15 +131,17 @@ export default function ClassSections({
     };
 
     const handleDeleteSuccess = () => {
-        console.log('✅ [ClassSections] Section deleted successfully!');
+        const deletedId = selectedSection?.id;
+        console.log('✅ [ClassSections] Section deleted successfully! ID:', deletedId);
+        
         setShowDeleteDialog(false);
         setSelectedSection(null);
-        if (onSectionChanged) {
-            onSectionChanged();
+        
+        if (onSectionChanged && deletedId) {
+            onSectionChanged('delete', deletedId);
         }
     };
 
-    // ====== Helper Function ======
     const getStudentsCount = (section: any): number => {
         if (!section) return 0;
         return section.total_students || 
@@ -137,7 +151,6 @@ export default function ClassSections({
                0;
     };
 
-    // ====== Columns ======
     const columns: Column<any>[] = [
         {
             key: 'name',
@@ -172,7 +185,6 @@ export default function ClassSections({
         },
     ];
 
-    // ====== Actions ======
     const actions: TableAction<any>[] = [
         {
             label: 'عرض',
@@ -247,7 +259,9 @@ export default function ClassSections({
                             mode="create"
                             classId={parseInt(classId)}
                             initialData={null}
-                            onSuccess={handleFormSuccess}
+                            onSuccess={(newSection) => {
+                                handleFormSuccess(newSection);
+                            }}
                             onCancel={closeFormDialog}
                         />
                     </div>
@@ -303,7 +317,11 @@ export default function ClassSections({
                             mode="edit"
                             classId={parseInt(classId)}
                             initialData={selectedSection}
-                            onSuccess={handleFormSuccess}
+                            onSuccess={(updatedSection) => {
+                                // ✅ تمرير البيانات المعدلة
+                                console.log('📝 [ClassSections] Edit success, updatedSection:', updatedSection);
+                                handleFormSuccess(updatedSection);
+                            }}
                             onCancel={closeEditDialog}
                         />
                     </div>

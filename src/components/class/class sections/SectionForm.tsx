@@ -17,7 +17,7 @@ interface SectionFormProps {
         name: string;
         comment: string | null;
     } | null;
-    onSuccess: () => void;
+    onSuccess: (data?: any) => void;
     onCancel: () => void;
 }
 
@@ -39,7 +39,6 @@ export const SectionForm = ({
 
     const isEdit = mode === 'edit';
 
-    // ✅ تعبئة النموذج إذا كان تعديل
     useEffect(() => {
         if (isEdit && initialData) {
             setFormData({
@@ -75,7 +74,6 @@ export const SectionForm = ({
                 return;
             }
 
-            // ✅ التحقق من صحة البيانات
             const newErrors: Record<string, string> = {};
 
             if (!formData.name.trim()) {
@@ -88,22 +86,40 @@ export const SectionForm = ({
                 return;
             }
 
-            // ✅ تجهيز البيانات للإرسال
             const payload = {
                 name: formData.name.trim(),
                 comment: formData.comment.trim() || null,
                 class_id: classId,
             };
 
+            let response;
+
             if (isEdit && initialData) {
                 // ✅ تعديل شعبة
-                await updateSectionToClass(token, initialData.id, payload);
+                console.log('📝 [SectionForm] Updating section:', initialData.id, payload);
+                response = await updateSectionToClass(token, initialData.id, payload);
+                console.log('📝 [SectionForm] Update response:', response);
+                
+                // ✅ تمرير البيانات المعدلة مع الحفاظ على الـ ID
+                onSuccess({
+                    id: initialData.id,
+                    name: payload.name,
+                    comment: payload.comment,
+                    class_id: classId,
+                });
             } else {
                 // ✅ إضافة شعبة
-                await addSectionToClass(token, payload);
+                console.log('📝 [SectionForm] Adding section:', payload);
+                response = await addSectionToClass(token, payload);
+                console.log('📝 [SectionForm] Add response:', response);
+                
+                // ✅ تمرير البيانات الجديدة
+                const newSection = response?.data || {
+                    id: response?.id || Date.now(),
+                    ...payload,
+                };
+                onSuccess(newSection);
             }
-
-            onSuccess();
 
         } catch (err: any) {
             console.error('❌ [SectionForm] Error:', err);
