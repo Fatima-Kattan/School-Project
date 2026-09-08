@@ -194,7 +194,10 @@ export default function ParentCard({
                                                 <div className="flex items-start flex-col min-w-0 h-2">
                                                     <button
                                                         className="flex items-start gap-0.5 text-[#2e7d32] text-xs font-medium hover:underline"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/student/details/${child.id}`);
+                                                        }}
                                                     >
                                                         عرض التفاصيل
                                                         <ChevronLeft size={12} />
