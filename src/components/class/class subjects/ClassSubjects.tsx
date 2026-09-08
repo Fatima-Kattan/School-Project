@@ -2,11 +2,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Plus, Eye, Edit, Trash2, Trash, Square, SquarePen } from 'lucide-react';
 import { Button } from '@/components/shared/button/button';
 import { Table, Column, TableAction } from '@/components/shared/table/table';
+import SubjectDeleteForm from './SubjectDeleteForm';
 
-// ✅ التغيير 1: إضافة onSubjectChanged و onAddSubject إلى interface
 interface ClassSubjectsProps {
     classId: string;
     subjects: Array<{
@@ -15,50 +16,59 @@ interface ClassSubjectsProps {
         comment: string | null;
         full_mark: string;
         semester?: string;
+        total_students?: number;
+        teachers_count?: number;
     }>;
     onSubjectClick?: (subjectId: number) => void;
-    onSubjectChanged?: (type: 'add' | 'edit' | 'delete', data?: any) => void; // ✅ جديد
-    onAddSubject?: () => void; // ✅ جديد
+    onSubjectChanged?: (type: 'add' | 'edit' | 'delete', data?: any) => void;
+    onAddSubject?: () => void;
 }
 
-// ✅ التغيير 2: استقبال الـ props الجديدة
 export default function ClassSubjects({
     classId,
     subjects,
     onSubjectClick,
-    onSubjectChanged, // ✅ جديد
-    onAddSubject // ✅ جديد
+    onSubjectChanged,
+    onAddSubject
 }: ClassSubjectsProps) {
     const router = useRouter();
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState<any>(null);
 
-    // ✅ التغيير 3: تعديل دالة إضافة مادة لاستخدام onAddSubject إذا كان موجوداً
     const handleAddSubject = () => {
         if (onAddSubject) {
-            onAddSubject(); // ✅ استخدام الـ prop إذا كان موجود
+            onAddSubject();
         } else {
-            router.push(`/classes/${classId}/subjects/create`); // ✅ fallback للطريقة القديمة
+            router.push(`/classes/${classId}/subjects/create`);
         }
     };
 
-    // ✅ التغيير 4: تعديل دالة التعديل لاستخدام onSubjectChanged
     const handleEditSubject = (row: any) => {
         if (onSubjectChanged) {
-            onSubjectChanged('edit', row); // ✅ إعلام المكون الأب بعملية التعديل
+            onSubjectChanged('edit', row);
         } else {
-            router.push(`/classes/${classId}/subjects/${row.id}/edit`); // ✅ fallback
+            router.push(`/classes/${classId}/subjects/${row.id}/edit`);
         }
     };
 
-    // ✅ التغيير 5: تعديل دالة الحذف لاستخدام onSubjectChanged
     const handleDeleteSubject = (row: any) => {
-        if (onSubjectChanged) {
-            onSubjectChanged('delete', row.id); // ✅ إعلام المكون الأب بعملية الحذف
-        } else {
-            console.log('🗑️ Delete subject:', row.id); // ✅ fallback
-        }
+        setSelectedSubject(row);
+        setShowDeleteDialog(true);
     };
 
-    // ✅ إذا لم توجد مواد → عرض رسالة "لا مواد مضافين بعد"
+    const handleConfirmDelete = () => {
+        if (selectedSubject && onSubjectChanged) {
+            onSubjectChanged('delete', selectedSubject.id);
+        }
+        setShowDeleteDialog(false);
+        setSelectedSubject(null);
+    };
+
+    const closeDeleteDialog = () => {
+        setShowDeleteDialog(false);
+        setSelectedSubject(null);
+    };
+
     if (!subjects || subjects.length === 0) {
         return (
             <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0]">
@@ -83,25 +93,7 @@ export default function ClassSubjects({
         );
     }
 
-    // ✅ إضافة الرقم التسلسلي للبيانات
-    const dataWithIndex = subjects.map((item, index) => ({
-        ...item,
-        _index: index + 1, // ✅ الرقم التسلسلي يبدأ من 1
-    }));
-
-    // ✅ تعريف الأعمدة
     const columns: Column<any>[] = [
-        {
-            key: '_index',
-            header: 'الرقم',
-            align: 'center',
-            width: 70,
-            render: (row) => {
-                // ✅ الرقم التسلسلي (01, 02, 03, ...)
-                const num = row._index.toString().padStart(2, '0');
-                return <span className="font-medium">{num}</span>;
-            },
-        },
         {
             key: 'name',
             header: 'اسم المادة',
@@ -110,13 +102,6 @@ export default function ClassSubjects({
             render: (row) => (
                 <span className="font-medium">{row.name}</span>
             ),
-        },
-        {
-            key: 'semester',
-            header: 'الفصل',
-            align: 'center',
-            width: 100,
-            render: (row) => row.semester || '-',
         },
         {
             key: 'full_mark',
@@ -137,14 +122,13 @@ export default function ClassSubjects({
         },
     ];
 
-    // ✅ التغيير 6: تعديل تعريف الأزرار (Actions) لاستخدام الدوال الجديدة
     const actions: TableAction<any>[] = [
         {
             label: 'تعديل',
             icon: <SquarePen size={16} />,
             variant: 'warning',
             onClick: (row) => {
-                handleEditSubject(row); // ✅ استخدام الدالة الجديدة
+                handleEditSubject(row);
             },
         },
         {
@@ -152,27 +136,36 @@ export default function ClassSubjects({
             icon: <Trash size={16} />,
             variant: 'danger',
             onClick: (row) => {
-                handleDeleteSubject(row); // ✅ استخدام الدالة الجديدة
+                handleDeleteSubject(row);
             },
         },
     ];
 
     return (
-        <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
-            <Table
-                columns={columns}
-                data={dataWithIndex} // ✅ نمرر البيانات مع الرقم التسلسلي
-                keyExtractor={(row) => row.id}
-                actions={actions}
-                headerBgColor="#F9FCFB"
-                rowBgColor="#FFFFFF"
-                borderColor="#E0E0E0"
-                radius={10}
-                hoverable={true}
-                className="w-full"
-                headerTextColor="#47524F"
-                headerFontWeight={600}
+        <>
+            <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
+                <Table
+                    columns={columns}
+                    data={subjects}
+                    keyExtractor={(row) => row.id}
+                    actions={actions}
+                    headerBgColor="#F9FCFB"
+                    rowBgColor="#FFFFFF"
+                    borderColor="#E0E0E0"
+                    radius={10}
+                    hoverable={true}
+                    className="w-full"
+                    headerTextColor="#47524F"
+                    headerFontWeight={600}
+                />
+            </div>
+
+            <SubjectDeleteForm
+                isOpen={showDeleteDialog}
+                subjectData={selectedSubject}
+                onClose={closeDeleteDialog}
+                onConfirm={handleConfirmDelete}
             />
-        </div>
+        </>
     );
 }

@@ -37,9 +37,10 @@ type TabType = 'subjects' | 'sections';
 export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDetailsProps) => {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabType>('sections');
-    const [classData, setClassData] = useState<any>(initialClassData); // ✅ استخدام any
+    const [classData, setClassData] = useState<any>(initialClassData);
     const [showSectionFormDialog, setShowSectionFormDialog] = useState(false);
     const [showSubjectFormDialog, setShowSubjectFormDialog] = useState(false);
+    const [editingSubject, setEditingSubject] = useState<any>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -50,6 +51,16 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     useEffect(() => {
         setClassData(initialClassData);
     }, [initialClassData]);
+
+    // ✅ دالة لحساب الإحصائيات من البيانات الفعلية
+    const calculateStatistics = (data: any) => {
+        return {
+            total_students: data.statistics?.total_students || 0,
+            total_sections: data.sections?.length || 0,
+            total_subjects: data.subjects?.length || 0,  // ✅ نحسب من الـ subjects الفعلية
+            total_teachers: data.statistics?.total_teachers || 0,
+        };
+    };
 
     const getSectionsWithStudentsCount = () => {
         if (!classData.sections) return [];
@@ -72,18 +83,13 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         }));
     };
 
-    // ✅ معالجات الشعبة
     const handleSectionFormSuccess = (newSection?: any) => {
         setShowSectionFormDialog(false);
         
         if (newSection) {
-            setClassData((prev: any) => ({ // ✅ استخدام any
+            setClassData((prev: any) => ({
                 ...prev,
                 sections: [...(prev.sections || []), newSection],
-                statistics: {
-                    ...prev.statistics,
-                    total_sections: (prev.statistics?.total_sections || 0) + 1,
-                }
             }));
         } else {
             if (onRefresh) {
@@ -97,7 +103,7 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     const handleSectionUpdate = (updatedSection: any) => {
         if (!updatedSection) return;
         
-        setClassData((prev: any) => ({ // ✅ استخدام any
+        setClassData((prev: any) => ({
             ...prev,
             sections: (prev.sections || []).map((section: any) => 
                 section.id === updatedSection.id ? updatedSection : section
@@ -108,13 +114,9 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     };
 
     const handleSectionDelete = (sectionId: number) => {
-        setClassData((prev: any) => ({ // ✅ استخدام any
+        setClassData((prev: any) => ({
             ...prev,
             sections: (prev.sections || []).filter((section: any) => section.id !== sectionId),
-            statistics: {
-                ...prev.statistics,
-                total_sections: (prev.statistics?.total_sections || 0) - 1,
-            }
         }));
         
         setRefreshKey(prev => prev + 1);
@@ -143,19 +145,26 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         setShowSectionFormDialog(false);
     };
 
-    // ✅ معالجات المادة
     const handleSubjectFormSuccess = (newSubject?: any) => {
         setShowSubjectFormDialog(false);
+        setEditingSubject(null);
         
         if (newSubject) {
-            setClassData((prev: any) => ({ // ✅ استخدام any
-                ...prev,
-                subjects: [...(prev.subjects || []), newSubject],
-                statistics: {
-                    ...prev.statistics,
-                    total_subjects: (prev.statistics?.total_subjects || 0) + 1,
-                }
-            }));
+            const isEdit = classData.subjects?.some((s: any) => s.id === newSubject.id);
+            
+            if (isEdit) {
+                setClassData((prev: any) => ({
+                    ...prev,
+                    subjects: (prev.subjects || []).map((subject: any) => 
+                        subject.id === newSubject.id ? newSubject : subject
+                    )
+                }));
+            } else {
+                setClassData((prev: any) => ({
+                    ...prev,
+                    subjects: [...(prev.subjects || []), newSubject],
+                }));
+            }
         } else {
             if (onRefresh) {
                 onRefresh();
@@ -168,7 +177,7 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     const handleSubjectUpdate = (updatedSubject: any) => {
         if (!updatedSubject) return;
         
-        setClassData((prev: any) => ({ // ✅ استخدام any
+        setClassData((prev: any) => ({
             ...prev,
             subjects: (prev.subjects || []).map((subject: any) => 
                 subject.id === updatedSubject.id ? updatedSubject : subject
@@ -179,13 +188,9 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     };
 
     const handleSubjectDelete = (subjectId: number) => {
-        setClassData((prev: any) => ({ // ✅ استخدام any
+        setClassData((prev: any) => ({
             ...prev,
             subjects: (prev.subjects || []).filter((subject: any) => subject.id !== subjectId),
-            statistics: {
-                ...prev.statistics,
-                total_subjects: (prev.statistics?.total_subjects || 0) - 1,
-            }
         }));
         
         setRefreshKey(prev => prev + 1);
@@ -195,7 +200,8 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         if (type === 'add' && data) {
             handleSubjectFormSuccess(data);
         } else if (type === 'edit' && data) {
-            handleSubjectUpdate(data);
+            setEditingSubject(data);
+            setShowSubjectFormDialog(true);
         } else if (type === 'delete' && data) {
             handleSubjectDelete(data);
         } else {
@@ -207,11 +213,13 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
     };
 
     const openAddSubjectDialog = () => {
+        setEditingSubject(null);
         setShowSubjectFormDialog(true);
     };
 
     const closeAddSubjectDialog = () => {
         setShowSubjectFormDialog(false);
+        setEditingSubject(null);
     };
 
     const isSectionsTab = activeTab === 'sections';
@@ -232,12 +240,8 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
         console.log('📖 Subject clicked:', subjectId);
     };
 
-    const statistics = classData.statistics || {
-        total_students: 0,
-        total_sections: 0,
-        total_subjects: 0,
-        total_teachers: 0,
-    };
+    // ✅ استخدام دالة حساب الإحصائيات
+    const statistics = calculateStatistics(classData);
 
     const statsCards = [
         {
@@ -448,21 +452,27 @@ export const ClassDetails = ({ classData: initialClassData, onRefresh }: ClassDe
                 />
             </Dialog>
 
-            {/* ديالوج إضافة مادة */}
+            {/* ديالوج إضافة/تعديل مادة */}
             <Dialog
                 isOpen={showSubjectFormDialog}
-                onClose={closeAddSubjectDialog}
+                onClose={() => {
+                    closeAddSubjectDialog();
+                    setEditingSubject(null);
+                }}
                 maxWidth="lg"
                 showCancel={false}
                 showConfirm={false}
                 hideCloseButton={false}
             >
                 <SubjectForm
-                    mode="create"
+                    mode={editingSubject ? 'edit' : 'create'}
                     classId={parseInt(classData.id)}
-                    initialData={null}
+                    initialData={editingSubject}
                     onSuccess={handleSubjectFormSuccess}
-                    onCancel={closeAddSubjectDialog}
+                    onCancel={() => {
+                        closeAddSubjectDialog();
+                        setEditingSubject(null);
+                    }}
                 />
             </Dialog>
         </div>
