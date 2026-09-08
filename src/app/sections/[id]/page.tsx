@@ -75,6 +75,11 @@ export default function SectionDetailsPage() {
         fetchSection();
     }, [sectionId, router]);
 
+    
+    const openAddStudentDialog = () => {
+        window.dispatchEvent(new CustomEvent('openAddStudentDialog'));
+    };
+
     // Breadcrumb items
     const breadcrumbItems = [
         { label: 'الصفوف والشعب', href: '/classes' },
@@ -121,18 +126,16 @@ export default function SectionDetailsPage() {
                 <div className="absolute left-6 top-1/2 -translate-y-1/2">
                     <Button
                         variant="primary"
-                        onClick={() => router.push(`/classes/${section.class_id}/sections/${section.id}/students/create`)}
+                        onClick={openAddStudentDialog}
                         leftIcon={<Plus size={16} />}
                         size="md"
                         className="px-5 py-2.5 shadow-sm"
+                        type="button"
                     >
                         إضافة طالب
                     </Button>
                 </div>
             </div>
-
-
-
 
             <div className="px-6 pt-4">
                 <div className="flex items-center justify-between bg-white rounded-[20px] border border-[#E0E0E0] p-3">

@@ -1,9 +1,11 @@
 // src/app/classes/[id]/page.tsx
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ClassDetails from '@/components/class/class details/ClassDetails';
+import { getClass } from '@/services/api/classes/getClass';
 
 export default function ClassDetailPage() {
     const params = useParams();
@@ -11,102 +13,75 @@ export default function ClassDetailPage() {
     const [classData, setClassData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // ✅ جلب التوكن من localStorage (يعمل في Client Component)
-                const token = localStorage.getItem('token') ||
-                                localStorage.getItem('auth_token') ||
-                                localStorage.getItem('access_token');
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            
+            const token = localStorage.getItem('token') ||
+                            localStorage.getItem('auth_token') ||
+                            localStorage.getItem('access_token');
 
-                console.log('🔑 Token found:', token ? 'Yes' : 'No');
-
-                if (!token) {
-                    console.log('❌ No token, redirecting to login');
-                    router.push('/login');
-                    return;
-                }
-
-                console.log(`📌 Fetching class ${params.id}...`);
-
-                // جلب بيانات الصف
-                const response = await fetch(
-                    `http://localhost:8000/api/dashboard/classes/${params.id}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                    }
-                );
-
-                console.log('📥 Response status:', response.status);
-
-                // إذا كان 401 → غير مصرح
-                if (response.status === 401) {
-                    console.log('❌ Unauthorized, redirecting to login');
-                    router.push('/login');
-                    return;
-                }
-
-                // إذا كان 404 → الصف غير موجود
-                if (response.status === 404) {
-                    setError('الصف غير موجود');
-                    setLoading(false);
-                    return;
-                }
-
-                // إذا كان خطأ آخر
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('📦 Data received:', data);
-
-                // التحقق من صحة البيانات
-                if (!data.success || !data.data) {
-                    throw new Error(data.message || 'Class not found');
-                }
-
-                const { class: classData, statistics } = data.data;
-
-                // تحويل البيانات للشكل المطلوب
-                const formattedData = {
-                    id: classData.id.toString(),
-                    name: classData.name,
-                    grade: classData.name,
-                    level: 'أساسي',
-                    comment: classData.comment || '',
-                    sections: classData.sections || [],
-                    subjects: classData.subjects || [],
-                    students: classData.students || [],
-                    statistics: {
-                        total_students: statistics?.total_students || 0,
-                        total_sections: statistics?.total_sections || 0,
-                        total_subjects: statistics?.total_subjects || 0,
-                        total_teachers: statistics?.total_teachers || 0,
-                    },
-                };
-
-                setClassData(formattedData);
-                setError(null);
-
-            } catch (err: any) {
-                console.error('❌ Error:', err);
-                setError(err.message || 'حدث خطأ');
-            } finally {
-                setLoading(false);
+            if (!token) {
+                router.push('/login');
+                return;
             }
-        };
 
-        fetchData();
+            const response = await getClass(Number(params.id), token);
+            
+            if (!response.success || !response.data) {
+                throw new Error(response.message || 'Class not found');
+            }
+
+            const { class: classData, statistics } = response.data;
+
+            const formattedData = {
+                id: classData.id.toString(),
+                name: classData.name,
+                grade: classData.name,
+                level: 'أساسي',
+                comment: classData.comment || '',
+                sections: classData.sections || [],
+                subjects: classData.subjects || [],
+                students: classData.students || [],
+                statistics: {
+                    total_students: statistics?.total_students || 0,
+                    total_sections: statistics?.total_sections || 0,
+                    total_subjects: statistics?.total_subjects || 0,
+                    total_teachers: statistics?.total_teachers || 0,
+                },
+            };
+
+            setClassData(formattedData);
+            setError(null);
+
+        } catch (err: any) {
+            console.error('❌ Error:', err);
+            
+            if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+                router.push('/login');
+                return;
+            }
+            
+            if (err.message?.includes('404')) {
+                setError('الصف غير موجود');
+            } else {
+                setError(err.message || 'حدث خطأ');
+            }
+        } finally {
+            setLoading(false);
+        }
     }, [params.id, router]);
 
-    // حالة التحميل
+    useEffect(() => {
+        fetchData();
+    }, [fetchData, refreshTrigger]);
+
+    const handleRefresh = useCallback(() => {
+        setRefreshTrigger(prev => prev + 1);
+    }, []);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -118,14 +93,13 @@ export default function ClassDetailPage() {
         );
     }
 
-    // حالة الخطأ
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px] p-10">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-red-500 mb-2">⚠️ {error}</h2>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={handleRefresh}
                         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     >
                         إعادة المحاولة
@@ -139,7 +113,6 @@ export default function ClassDetailPage() {
         );
     }
 
-    // لا توجد بيانات
     if (!classData) {
         return (
             <div className="flex items-center justify-center min-h-[400px] p-10">
@@ -153,6 +126,11 @@ export default function ClassDetailPage() {
         );
     }
 
-    // عرض الصفحة
-    return <ClassDetails classData={classData} />;
+    return (
+        <ClassDetails 
+            key={refreshTrigger}
+            classData={classData} 
+            onRefresh={handleRefresh} 
+        />
+    );
 }

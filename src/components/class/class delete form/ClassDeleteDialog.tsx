@@ -11,11 +11,17 @@ interface ClassDeleteDialogProps {
         name: string;
         statistics?: {
             total_students: number;
+            total_sections?: number;
         };
         students?: Array<{
             id: number;
             full_name: string;
         }>;
+        sections?: Array<{
+            id: number;
+            name: string;
+        }>;
+        sections_count?: number; 
     } | null;
     onClose: () => void;
 }
@@ -25,19 +31,19 @@ export const ClassDeleteDialog = ({
     classData,
     onClose,
 }: ClassDeleteDialogProps) => {
-    const [studentsList, setStudentsList] = useState<Array<{ id: number; full_name: string }>>([]);
-    const [loadingStudents, setLoadingStudents] = useState(false);
-    const [totalStudents, setTotalStudents] = useState(0);
+    const [sectionsList, setSectionsList] = useState<Array<{ id: number; name: string }>>([]);
+    const [loadingSections, setLoadingSections] = useState(false);
+    const [totalSections, setTotalSections] = useState(0);
 
     
-    const fetchStudents = async () => {
+    const fetchSections = async () => {
         if (!classData?.id) return;
 
-        setLoadingStudents(true);
+        setLoadingSections(true);
         try {
             const token = localStorage.getItem('token') || '';
             const response = await fetch(
-                `http://localhost:8000/api/dashboard/students/class/${classData.id}`,
+                `http://localhost:8000/api/dashboard/sections?class_id=${classData.id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -49,49 +55,58 @@ export const ClassDeleteDialog = ({
             const result = await response.json();
 
             if (result.success && result.data) {
-                
-                const students = result.data.map((student: any) => ({
-                    id: student.id,
-                    full_name: student.full_name || student.user?.full_name || student.name || 'طالب',
+                let sections = [];
+                if (Array.isArray(result.data)) {
+                    sections = result.data;
+                } else if (result.data.data) {
+                    sections = result.data.data;
+                } else {
+                    sections = [];
+                }
+
+                const sectionsList = sections.map((section: any) => ({
+                    id: section.id,
+                    name: section.name,
                 }));
 
-                // خذ أول 3 طلاب فقط
-                const firstThree = students.slice(0, 3);
-                setStudentsList(firstThree);
-                setTotalStudents(students.length);
+                const firstThree = sectionsList.slice(0, 3);
+                setSectionsList(firstThree);
+                setTotalSections(sectionsList.length);
             } else {
                 
-                if (classData.students && classData.students.length > 0) {
-                    const students = classData.students.map((s: any) => ({
+                const sections = classData.sections || [];
+                if (sections.length > 0) {
+                    const sectionsList = sections.map((s: any) => ({
                         id: s.id,
-                        full_name: s.full_name || s.name || 'طالب',
+                        name: s.name,
                     }));
-                    const firstThree = students.slice(0, 3);
-                    setStudentsList(firstThree);
-                    setTotalStudents(students.length);
+                    const firstThree = sectionsList.slice(0, 3);
+                    setSectionsList(firstThree);
+                    setTotalSections(sectionsList.length);
                 } else {
-                    setStudentsList([]);
-                    setTotalStudents(0);
+                    setSectionsList([]);
+                    setTotalSections(0);
                 }
             }
         } catch (error) {
-            console.error('Error fetching students:', error);
+            console.error('Error fetching sections:', error);
             
             
-            if (classData.students && classData.students.length > 0) {
-                const students = classData.students.map((s: any) => ({
+            const sections = classData.sections || [];
+            if (sections.length > 0) {
+                const sectionsList = sections.map((s: any) => ({
                     id: s.id,
-                    full_name: s.full_name || s.name || 'طالب',
+                    name: s.name,
                 }));
-                const firstThree = students.slice(0, 3);
-                setStudentsList(firstThree);
-                setTotalStudents(students.length);
+                const firstThree = sectionsList.slice(0, 3);
+                setSectionsList(firstThree);
+                setTotalSections(sectionsList.length);
             } else {
-                setStudentsList([]);
-                setTotalStudents(0);
+                setSectionsList([]);
+                setTotalSections(0);
             }
         } finally {
-            setLoadingStudents(false);
+            setLoadingSections(false);
         }
     };
 
@@ -99,23 +114,60 @@ export const ClassDeleteDialog = ({
     useEffect(() => {
         if (isOpen && classData) {
             
-            if (classData.students && classData.students.length > 0) {
-                const students = classData.students.map((s: any) => ({
+            if (classData.sections_count !== undefined && classData.sections_count > 0) {
+                setTotalSections(classData.sections_count);
+                
+                if (classData.sections && classData.sections.length > 0) {
+                    const sections = classData.sections.map((s: any) => ({
+                        id: s.id,
+                        name: s.name,
+                    }));
+                    const firstThree = sections.slice(0, 3);
+                    setSectionsList(firstThree);
+                }
+                setLoadingSections(false);
+                return;
+            }
+
+            
+            if (classData.statistics?.total_sections !== undefined && classData.statistics.total_sections > 0) {
+                setTotalSections(classData.statistics.total_sections);
+                if (classData.sections && classData.sections.length > 0) {
+                    const sections = classData.sections.map((s: any) => ({
+                        id: s.id,
+                        name: s.name,
+                    }));
+                    const firstThree = sections.slice(0, 3);
+                    setSectionsList(firstThree);
+                }
+                setLoadingSections(false);
+                return;
+            }
+
+            
+            if (classData.sections && classData.sections.length > 0) {
+                const sections = classData.sections.map((s: any) => ({
                     id: s.id,
-                    full_name: s.full_name || s.name || 'طالب',
+                    name: s.name,
                 }));
-                const firstThree = students.slice(0, 3);
-                setStudentsList(firstThree);
-                setTotalStudents(students.length);
-                setLoadingStudents(false);
+                const firstThree = sections.slice(0, 3);
+                setSectionsList(firstThree);
+                setTotalSections(sections.length);
+                setLoadingSections(false);
             } else {
-                // جلب من الـ API
-                fetchStudents();
+                // ✅ 4. جلب من الـ API
+                fetchSections();
             }
         }
     }, [isOpen, classData]);
 
+    
     if (!isOpen) return null;
+
+    
+    if (totalSections === 0 && !loadingSections) {
+        return null; 
+    }
 
     return (
         <div
@@ -131,7 +183,7 @@ export const ClassDeleteDialog = ({
                     <h2 className="text-xl font-bold text-gray-900">حذف صف</h2>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-red-50 active:bg-red-100hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 rounded-full transition-colors"
+                        className="p-1 hover:bg-red-50 active:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 rounded-full transition-colors cursor-pointer"
                     >
                         <X size={20} className="text-gray-500" />
                     </button>
@@ -141,36 +193,36 @@ export const ClassDeleteDialog = ({
                 <div className="px-6 py-4">
                     
                     <p className="text-red-600 text-base mb-3">
-                        لا يمكن حذف الصف لأنه يحتوي على {totalStudents} طالب
-                        {totalStudents > 1 ? '' : ''}
+                        لا يمكن حذف الصف لأنه يحتوي على {totalSections} شعبة
+                        {totalSections > 1 ? '' : ''}
                     </p>
 
                     
-                    {loadingStudents ? (
+                    {loadingSections ? (
                         <div className="flex justify-center py-3">
                             <Loader2 className="animate-spin text-gray-400" size={24} />
                         </div>
                     ) : (
                         <>
                             
-                            {studentsList.length > 0 && (
+                            {sectionsList.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-2">
-                                    {studentsList.map((student) => (
+                                    {sectionsList.map((section) => (
                                         <span
-                                            key={student.id}
+                                            key={section.id}
                                             className="flex items-center justify-center flex-shrink-1 bg-[#fae5e5] text-red-600 text-md font-bold min-w-[60px] h-[30px] p-2 rounded-xl"
                                         >
-                                            {student.full_name}
+                                            {section.name}
                                         </span>
                                     ))}
                                 </div>
                             )}
                             
                             
-                            {totalStudents > 3 && (
+                            {totalSections > 3 && (
                                 <p className="text-gray-500 text-sm mr-2">
-                                    و {totalStudents - 3} طالب آخر
-                                    {totalStudents - 3 > 1 ? 'ين' : ''}
+                                    و {totalSections - 3} شعبة
+                                    {totalSections - 3 > 1 ? '' : ''}
                                 </p>
                             )}
                         </>
@@ -178,7 +230,7 @@ export const ClassDeleteDialog = ({
 
                     
                     <p className="text-red-600 text-sm font-medium mt-3">
-                        قم بحذف الطلاب أولاً ثم احذف الصف
+                        قم بحذف الشعب أولاً ثم احذف الصف
                     </p>
                 </div>
 
@@ -188,7 +240,7 @@ export const ClassDeleteDialog = ({
                         variant="ghost-outline"
                         onClick={onClose}
                         size="md"
-                        className="h-[36px] rounded-[12px] text-sm"
+                        className="h-[36px] rounded-[12px] text-sm "
                         minWidth="80px"
                     >
                         إغلاق
