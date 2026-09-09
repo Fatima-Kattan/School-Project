@@ -23,6 +23,12 @@ export interface LoginResponse {
 
 export async function loginAPI(data: LoginRequest): Promise<LoginResponse> {
     try {
+        // ✅ شرط التحقق من userName
+        if (!data.user_name.startsWith('mgr')) {
+            console.error('❌ Invalid username: Must start with "mgr"');
+            throw new Error(' لايمكنك تسجيل الدخول بحساب ليس مدير');
+        }
+
         console.log('🔐 Step 1: Logging in...');
         const response = await fetch(`${API_BASE_URL}/login`, {
             method: 'POST',
@@ -51,7 +57,6 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResponse> {
         console.log('🔑 Token found:', authToken ? authToken.substring(0, 30) + '...' : '❌ NO TOKEN');
 
         if (authToken) {
-            // ✅ تغيير من 'auth_token' إلى 'token'
             localStorage.setItem('token', authToken);
             localStorage.setItem('user', JSON.stringify(
                 responseData.user || responseData.data?.user || {}
@@ -83,13 +88,11 @@ export async function loginAPI(data: LoginRequest): Promise<LoginResponse> {
 }
 
 async function saveFCMToken(fcmToken: string, authToken: string) {
-    // ✅ تأكد من وجود التوكن
     if (!authToken) {
         console.error('❌ No auth token available!');
         return;
     }
 
-    // ✅ تأكد من أن التوكن يبدأ بـ "Bearer "
     const token = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
     console.log('🔑 Sending token:', token.substring(0, 40) + '...');
 
