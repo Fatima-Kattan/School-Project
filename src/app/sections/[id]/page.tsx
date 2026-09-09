@@ -150,7 +150,7 @@ export default function SectionDetailsPage() {
                         >
                             الطلاب
                         </Button>
-                        <Button
+                        {/* <Button
                             onClick={() => setActiveTab('exams')}
                             variant={activeTab === 'exams' ? 'primary' : 'ghost-outline'}
                             size="md"
@@ -159,7 +159,7 @@ export default function SectionDetailsPage() {
                                 }`}
                         >
                             الاختبارات
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
             </div>
@@ -175,7 +175,7 @@ export default function SectionDetailsPage() {
                     />
                 )}
 
-                {activeTab === 'exams' && (
+                {/* {activeTab === 'exams' && (
                     <div className="bg-white rounded-[15px] p-6 border border-[#E0E0E0] flex-1 min-h-[448px]">
                         <Empty
                             title="لا توجد اختبارات"
@@ -185,7 +185,7 @@ export default function SectionDetailsPage() {
                             icon={<ClipboardList size={32} />}
                         />
                     </div>
-                )}
+                )} */}
             </div>
         </div>
 
